@@ -46,3 +46,7 @@ end
 function level1:draw()
 	map:draw()
 end
+
+function level1:quit()
+	collider:clear()
+end
