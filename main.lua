@@ -12,15 +12,13 @@ local cutscene = {}
 local level1 = {}
 local boss1 = {}
 
-love.graphics.setNewFont(32)
-
 local function fire(key)
 	if key == "q" then
-		newbullet = {x = manus.x + 7, y = manus.y + 20}
+		newbullet = {x = manus.x - Img.PINKY1:getWidth() / 2, y = manus.y - Img.PINKY1:getHeight()}
 		table.insert(qbullets, newbullet)
 	
 	elseif key == "w" then
-		newbullet = {x = manus.x + 7, y = manus.y + 20}
+		newbullet = {x = manus.x - Img.RING1:getWidth() + 5, y = manus.y - Img.RING1:getHeight()}
 		table.insert(wbullets, newbullet)
 	
 	elseif key == "e" then
@@ -37,6 +35,7 @@ local function fire(key)
 	end	
 end
 
+
 local function Proxy(f)
 	return setmetatable({}, {__index = function(self, k)
 		local v = f(k)
@@ -52,22 +51,31 @@ Music = Proxy(function(k) return k, "stream" end)
 function level1:init()
 	waveTimer = 12
 	waveTimerMax = 12
+
+	pinkySprite, ringSprite, middleSprite, indexSprite, thumbSprite = Img.PINKY1, Img.RING1, Img.MIDDLE1, Img.INDEX1, Img.THUMB1
+	
 end
 
 function level1:enter(previous, ...)
-	manus = {status = neutral, x = 450, y = 600, img = nil}
-	speed = 100
-
 	files = {}
-	scissors = {}
+	clipper = {}
 
-	cooldown = 0
 	controlCooldown = 0.3
-
-	pressed = {q = false, w = false, e = false, r = false, space = false}
 
 	qbullets, wbullets, ebullets, rbullets, sbullets = {}, {}, {}, {}, {}
 	allOwnBullets = {qbullets, wbullets, ebullets, rbullets, sbullets}
+
+	idle = Img.IDLE1
+
+	fPinky = {base = {-22, 7 - Img.PINKY1:getHeight()}, loc = {-22, 7 - Img.PINKY1:getHeight()}, sprite = pinkySprite}
+	fRing = {base = {2, 5 - Img.RING1:getHeight()}, loc = {2, 5 - Img.RING1:getHeight()}, sprite = ringSprite}
+	fMiddle = {base = {46, 2 - Img.MIDDLE1:getHeight()}, loc = {46, 2 - Img.MIDDLE1:getHeight()}, sprite = middleSprite}
+	fIndex = {base = {70, 5 - Img.INDEX1:getHeight()}, loc = {70, 5 - Img.INDEX1:getHeight()}, sprite = indexSprite}
+	fThumb = {base = {91, 49 - Img.THUMB1:getHeight()}, loc = {91, 49 - Img.THUMB1:getHeight()}, sprite = thumbSprite}
+
+	lastShots = {q = 999, w = 999, e = 999, r = 999, space = 999}
+
+	counter = 0
 end
 
 function level1:update(dt)
@@ -102,31 +110,58 @@ function level1:update(dt)
 		end
 	end
 
+	for k,v in pairs(lastShots) do
+		lastShots[k] = v + dt
+	end
+	controlCooldown = controlCooldown - dt
+
 	for k1,v1 in pairs(fingers) do
 		if love.keyboard.isDown(v1) then
-			if v1 == " " then
-				pressed["space"] = true
+			if controlCooldown <= 0 then
+				fire(v1)
+				controlCooldown = 0.5
+				if v1 == " " then
+					lastShots.space = 0
+				else
+					lastShots[v1] = 0
+				end
+			end
+		end
+	end
+
+	for k,v in pairs(lastShots) do
+		if v >= 4 then
+			if k == "space" then
+				fThumb.loc = fThumb.base
+			elseif k == "q" then
+				fPinky.loc = fPinky.base
+			elseif k == "w" then
+				fRing.loc = fRing.base
+			elseif k == "e" then
+				fMiddle.loc = fMiddle.base
 			else
-				pressed[v1] = true
+				fIndex.loc = fIndex.base
 			end
 		end
 	end
 
-	controlCooldown = controlCooldown - dt
-	if controlCooldown <= 0 then
-		for k,v in pairs(pressed) do
-			if v == true then
-				fire(k)
-			end
-			pressed[k] = false
-		end
-
-		controlCoolDown = 500000
-	end
+	if counter >= 0.2 then
+		if idle == Img.IDLE1 then
+			idle = Img.IDLE2
+		elseif
 end
 
 function level1:draw()
-	love.graphics.draw(Img.IDLE2, manus.x, manus.y)
+	
+	love.graphics.draw(idle, manus.x, manus.y)
+	love.graphics.draw(fPinky.sprite, manus.x + fPinky.loc[1], manus.y + fPinky.loc[2])
+	love.graphics.draw(fRing.sprite, manus.x + fRing.loc[1], manus.y + fRing.loc[2])
+	love.graphics.draw(fMiddle.sprite, manus.x + fMiddle.loc[1], manus.y + fMiddle.loc[2])
+	love.graphics.draw(fIndex.sprite, manus.x + fIndex.loc[1], manus.y + fIndex.loc[2])
+	love.graphics.draw(fThumb.sprite, manus.x + fThumb.loc[1], manus.y + fThumb.loc[2])
+
+--	love.graphics.draw(Img.IDLE1, manus.x, manus.y)
+
 	for k1, v1 in pairs(allOwnBullets) do
 		for number, bullet in pairs(v1) do
 			love.graphics.circle("fill", bullet.x, bullet.y, 5, 5)
@@ -149,8 +184,6 @@ end
 
 
 function love.load()
---	playerImage = love.graphics.newImage("img/playerPH.png")
---	manus = {status = neutral, x = 450, y = 600, img = love.graphics.newImage("img/playerPH.png") }
 	manus = {status = neutral, x = 450, y = 600 }
 	speed = 220
 	fingers = {"q", "w", "e", "r", " "}
