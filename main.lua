@@ -14,23 +14,23 @@ local boss1 = {}
 
 local function fire(key)
 	if key == "q" then
-		newbullet = {x = manus.x - Img.PINKY1:getWidth() / 2, y = manus.y - Img.PINKY1:getHeight()}
+		newbullet = {x = fPinky.base[1] + 13, y = fPinky.base[2]}
 		table.insert(qbullets, newbullet)
 	
 	elseif key == "w" then
-		newbullet = {x = manus.x - Img.RING1:getWidth() + 5, y = manus.y - Img.RING1:getHeight()}
+		newbullet = {x =fRing.base[1] + 15, y = fRing.base[2]}
 		table.insert(wbullets, newbullet)
 	
 	elseif key == "e" then
-		newbullet = {x = manus.x + 7, y = manus.y + 20}
+		newbullet = {x = fMiddle.base[1] + 15, y = fMiddle.base[2]}
 		table.insert(ebullets, newbullet)
 	
 	elseif key == "r" then
-		newbullet = {x = manus.x + 7, y = manus.y + 20}
+		newbullet = {x = fIndex.base[1] + 36, y = fIndex.base[2]}
 		table.insert(rbullets, newbullet)
 	
 	elseif key == " " then
-		newbullet = {x = manus.x + 7, y = manus.y + 20}
+		newbullet = {x = fThumb.base[1] + 46, y = fThumb.base[2]}
 		table.insert(sbullets, newbullet)
 	end	
 end
@@ -49,8 +49,8 @@ Sound = Proxy(function(k) return love.sound.newSoundData("sound/"..k..".ogg") en
 Music = Proxy(function(k) return k, "stream" end)
 
 function level1:init()
-	waveTimer = 12
-	waveTimerMax = 12
+	waveTimer = 200
+	waveTimerMax = 200
 
 	pinkySprite, ringSprite, middleSprite, indexSprite, thumbSprite = Img.PINKY1, Img.RING1, Img.MIDDLE1, Img.INDEX1, Img.THUMB1
 	
@@ -113,24 +113,40 @@ function level1:update(dt)
 	for k,v in pairs(lastShots) do
 		lastShots[k] = v + dt
 	end
+
 	controlCooldown = controlCooldown - dt
+	
+	counter = counter + dt
 
 	for k1,v1 in pairs(fingers) do
-		if love.keyboard.isDown(v1) then
-			if controlCooldown <= 0 then
+		if controlCooldown <= 0 then
+			if love.keyboard.isDown(v1) then
 				fire(v1)
 				controlCooldown = 0.5
 				if v1 == " " then
 					lastShots.space = 0
+					fThumb.loc[2] = fThumb.base[2] + 2
 				else
 					lastShots[v1] = 0
+					if v1 == "q" then
+						fPinky.loc[2] = fPinky.base[2] + 2
+					if v1 == "w" then
+						fRing.loc[2] = fRing.base[2] + 2
+					if v1 == "e" then
+						fMiddle.loc[2] = fMiddle.base[2] + 2
+					if v1 == "r" then
+						fIndex.loc[2] = fIndex.base[2] + 2
+					end
+					end
+					end
+					end
 				end
 			end
 		end
 	end
 
 	for k,v in pairs(lastShots) do
-		if v >= 4 then
+		if v >= 0.2 then
 			if k == "space" then
 				fThumb.loc = fThumb.base
 			elseif k == "q" then
@@ -145,10 +161,22 @@ function level1:update(dt)
 		end
 	end
 
-	if counter >= 0.2 then
+	if counter >= 2.5 then
 		if idle == Img.IDLE1 then
 			idle = Img.IDLE2
-		elseif
+			last = 1
+		elseif idle == Img.IDLE3 then
+			idle = Img.IDLE2
+			last = 3
+		else
+			if last == 1 then
+				idle = Img.IDLE3
+			else
+				idle = Img.IDLE1
+			end
+		end
+		counter = 0
+	end
 end
 
 function level1:draw()
@@ -159,8 +187,6 @@ function level1:draw()
 	love.graphics.draw(fMiddle.sprite, manus.x + fMiddle.loc[1], manus.y + fMiddle.loc[2])
 	love.graphics.draw(fIndex.sprite, manus.x + fIndex.loc[1], manus.y + fIndex.loc[2])
 	love.graphics.draw(fThumb.sprite, manus.x + fThumb.loc[1], manus.y + fThumb.loc[2])
-
---	love.graphics.draw(Img.IDLE1, manus.x, manus.y)
 
 	for k1, v1 in pairs(allOwnBullets) do
 		for number, bullet in pairs(v1) do
