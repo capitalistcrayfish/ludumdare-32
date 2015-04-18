@@ -26,6 +26,11 @@ local function Proxy(f)
 	end})
 end
 
+State = Proxy( function(k) return assert(love.filesystem.load("state/"..k..".lua"))() end)
+Img = Proxy( function(k) return loves.graphics.newImage("img/"..k..".png") end)
+Sound = Proxy(function(k) return love.sound.newSoundData("sound/"..k..".ogg") end)
+Music = Proxy(function(k) return k, "stream" end)
+
 function love.load()
 	map = loader.load("MAPNAME")
 
