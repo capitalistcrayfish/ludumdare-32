@@ -14,6 +14,28 @@ local boss1 = {}
 
 love.graphics.setNewFont(32)
 
+local function fire(key)
+	if key == "q" then
+		newbullet = {x = manus.x + 7, y = manus.y + 20}
+		table.insert(qbullets, newbullet)
+	
+	elseif key == "w" then
+		newbullet = {x = manus.x + 7, y = manus.y + 20}
+		table.insert(wbullets, newbullet)
+	
+	elseif key == "e" then
+		newbullet = {x = manus.x + 7, y = manus.y + 20}
+		table.insert(ebullets, newbullet)
+	
+	elseif key == "r" then
+		newbullet = {x = manus.x + 7, y = manus.y + 20}
+		table.insert(rbullets, newbullet)
+	
+	elseif key == " " then
+		newbullet = {x = manus.x + 7, y = manus.y + 20}
+		table.insert(sbullets, newbullet)
+	end	
+end
 
 local function Proxy(f)
 	return setmetatable({}, {__index = function(self, k)
@@ -43,6 +65,8 @@ function level1:enter(previous, ...)
 	controlCooldown = 0.3
 
 	pressed = {q = false, w = false, e = false, r = false, space = false}
+
+	qbullets, wbullets, ebullets, rbullets, sbullets = {}, {}, {}, {}, {}
 end
 
 function level1:update(dt)
@@ -71,7 +95,7 @@ function level1:update(dt)
 	for k1,v1 in pairs(fingers) do
 		if love.keyboard.isDown(v1) then
 			if v1 == " " then
-				pressed[space] = true
+				pressed["space"] = true
 			else
 				pressed[v1] = true
 			end
@@ -86,6 +110,8 @@ function level1:update(dt)
 			end
 			pressed[k] = false
 		end
+
+		controlCoolDown = 0.3
 	end
 end
 
