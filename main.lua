@@ -67,6 +67,7 @@ function level1:enter(previous, ...)
 	pressed = {q = false, w = false, e = false, r = false, space = false}
 
 	qbullets, wbullets, ebullets, rbullets, sbullets = {}, {}, {}, {}, {}
+	allOwnBullets = {qbullets, wbullets, ebullets, rbullets, sbullets}
 end
 
 function level1:update(dt)
@@ -77,7 +78,7 @@ function level1:update(dt)
 		end
 	end
 	if love.keyboard.isDown("right") then
-		if manus.x < love.graphics.getWidth() - Img.playerPH:getWidth() then
+		if manus.x < love.graphics.getWidth() - Img.IDLE1:getWidth() then
 			manus.x = manus.x + (speed * dt)
 		end
 	end
@@ -87,8 +88,17 @@ function level1:update(dt)
 		end
 	end
 	if love.keyboard.isDown("down") then
-		if manus.y < love.graphics.getHeight() - Img.playerPH:getHeight() then
+		if manus.y < love.graphics.getHeight() - Img.IDLE1:getHeight() then
 			manus.y = manus.y + (0.5 * speed * dt)
+		end
+	end
+
+	for k1, v1 in pairs(allOwnBullets) do
+		for number,bullet in pairs(v1) do
+			bullet.y = bullet.y - (speed * 5 * dt)
+			if bullet.y < 0 then
+				table.remove(v1, number)
+			end
 		end
 	end
 
@@ -111,12 +121,17 @@ function level1:update(dt)
 			pressed[k] = false
 		end
 
-		controlCoolDown = 0.3
+		controlCoolDown = 500000
 	end
 end
 
 function level1:draw()
-	love.graphics.draw(Img.playerPH, manus.x, manus.y)
+	love.graphics.draw(Img.IDLE2, manus.x, manus.y)
+	for k1, v1 in pairs(allOwnBullets) do
+		for number, bullet in pairs(v1) do
+			love.graphics.circle("fill", bullet.x, bullet.y, 5, 5)
+		end
+	end
 end
 
 function level1:quit()
