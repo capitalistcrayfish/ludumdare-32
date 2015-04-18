@@ -1,5 +1,5 @@
 function love.conf(t)
-	t.title = "H.A.N.D. - Hey! Attack'n'Defend!"
+	t.title = "Operation H.A.N.D."
 	t.version = "0.9.1"
 	t.window.width = 900
 	t.window.height = 900
