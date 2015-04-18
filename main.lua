@@ -7,7 +7,7 @@
 
 local loader = require "libs/AdvTileLoader/Loader" -- Might not be needed
 local gamestate = require "libs/HUMP/gamestate"
-local HCollider = require "libs/HC/HardonCollider"
+local HCollider = require "libs/HC"
 
 local menu = {} -- Define gamestates
 local level1 = {}
@@ -26,17 +26,17 @@ local function Proxy(f)
 	end})
 end
 
-State = Proxy( function(k) return assert(love.filesystem.load("state/"..k..".lua"))() end)
+State = Proxy( function(k) return assert(love.filesystem.load("maps/"..k..".lua"))() end)
 Img = Proxy( function(k) return loves.graphics.newImage("img/"..k..".png") end)
 Sound = Proxy(function(k) return love.sound.newSoundData("sound/"..k..".ogg") end)
 Music = Proxy(function(k) return k, "stream" end)
 
 function love.load()
-	map = loader.load("MAPNAME")
+	--map1 = loader.load("map1")
 
 	collider = HCollider(150)
 
-	allSolidTiles = findSolidTiles(map)
+	--allSolidTiles = findSolidTiles(map)
 end
 
 function level1:update(dt)
