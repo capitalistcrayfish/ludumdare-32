@@ -7,9 +7,13 @@
 
 local loader = require "libs/AdvTileLoader/Loader" -- Might not be needed
 local gamestate = require "libs/HUMP/gamestate"
+local HCollider = require "libs/HC/HardonCollider"
 
 local menu = {} -- Define gamestates
 local level1 = {}
+
+local collider
+local allSolidTiles
 
 loader.path = "maps/"
 
@@ -23,13 +27,17 @@ local function Proxy(f)
 end
 
 function love.load()
+	map = loader.load("MAPNAME")
+
+	collider = HCollider(150)
+
+	allSolidTiles = findSolidTiles(map)
+end
+
+function level1:update(dt)
 	-- code
 end
 
-function love.update(dt)
-	-- code
-end
-
-function love.draw()
+function level1:draw()
 	map:draw()
 end
