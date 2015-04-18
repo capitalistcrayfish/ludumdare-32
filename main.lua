@@ -5,17 +5,16 @@
 -- Programming: Marnix "Weloxux" Massar <weloxux@glowbug.nl>
 -- Sprites: Brzoz <email and stuff>
 
-local loader = require "libs/AdvTileLoader/Loader" -- Might not be needed
-local gamestate = require "libs/HUMP/gamestate"
-local HCollider = require "libs/HC"
+local Gamestate = require "libs/HUMP/gamestate"
 
 local menu = {} -- Define gamestates
+local cutscene = {}
 local level1 = {}
+local boss1 = {}
 
-local collider
-local allSolidTiles
+love.graphics.setNewFont(32)
 
-loader.path = "maps/"
+
 
 -- Manage resources (inspired by vrld's Princess):
 local function Proxy(f)
@@ -26,27 +25,34 @@ local function Proxy(f)
 	end})
 end
 
-State = Proxy( function(k) return assert(love.filesystem.load("maps/"..k..".lua"))() end)
 Img = Proxy( function(k) return loves.graphics.newImage("img/"..k..".png") end)
 Sound = Proxy(function(k) return love.sound.newSoundData("sound/"..k..".ogg") end)
 Music = Proxy(function(k) return k, "stream" end)
 
-function love.load()
-	--map1 = loader.load("map1")
-
-	collider = HCollider(150)
-
-	--allSolidTiles = findSolidTiles(map)
-end
 
 function level1:update(dt)
 	-- code
 end
 
 function level1:draw()
-	map:draw()
+	love.graphics.print(":)", 0, 34)
 end
 
 function level1:quit()
-	collider:clear()
+end
+
+function menu:keyreleased(key, code)
+	if key == "return" then
+		Gamestate.switch(level1)
+	end
+end
+
+function menu:draw()
+	love.graphics.print("Menu\nWork In Progress\nPress ENTER")
+end
+
+
+function love.load()
+	Gamestate.registerEvents()
+	Gamestate.switch(menu)
 end
