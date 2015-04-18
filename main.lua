@@ -35,6 +35,8 @@ function level1:init()
 	pinkySprite, ringSprite, middleSprite, indexSprite, thumbSprite = Img.PINKY1, Img.RING1, Img.MIDDLE1, Img.INDEX1, Img.THUMB1
 
 	waveTypes = {"single", "double", "triangle"} -- Define wavetypes
+
+	counter = 0
 end
 
 function level1:enter(previous, ...)
@@ -77,7 +79,7 @@ function level1:update(dt)
 	for k1,v1 in pairs(allFingers) do
 		v1.lastShot = v1.lastShot + dt -- Append to the shot timer
 
-		for key,bullet in v1.bullets do
+		for key,bullet in pairs(v1.bullets) do
 			bullet.y = bullet.y - (speed * 5 * dt) -- Move the bullets
 			if bullet.y < 0 then -- If the bullet is out of sight, remove it (slightly amateuristically done here)
 				table.remove(v1, key)
@@ -86,8 +88,9 @@ function level1:update(dt)
 
 		if v1.lastShot >= 0.2 then
 			v1.loc = v1.base
+		end
 
-		if controlCooldown <= 0 and love.keyboard.isdown(v1.id)
+		if controlCooldown <= 0 and love.keyboard.isdown(v1.id) then
 			fire(v1)
 			controlCooldown = 0.5
 			v1.lastShot = 0
@@ -111,9 +114,9 @@ function level1:draw()
 	love.graphics.draw(manus.sprite, manus.x, manus.y) -- Draw Manus
 
 	for k,v in pairs(allFingers) do
-		love.graphics.draw(v.sprite, manus.x + v.x, manus.y + v.y) -- Draw the fingers
+		love.graphics.draw(v.sprite, manus.x + v.loc[1], manus.y + v.loc[2]) -- Draw the fingers
 
-		for key, bullet in v.bullets do
+		for key, bullet in pairs(v.bullets) do
 			love.graphics.circle("fill", bullet.x, bullet.y, 5, 30) -- Draw the bullet placeholders
 		end
 	end
