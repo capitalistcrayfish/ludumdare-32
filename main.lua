@@ -16,8 +16,9 @@ love.graphics.setNewFont(32)
 
 manus = {status = neutral, x = 450, y = 600, img = nil}
 speed = 100
+fingers = ["q", "w", "e", "r", " "]
 
--- Manage resources (inspired by vrld's Princess):
+-- Manage resources (created by vrld's Princess):
 local function Proxy(f)
 	return setmetatable({}, {__index = function(self, k)
 		local v = f(k)
@@ -33,8 +34,6 @@ Music = Proxy(function(k) return k, "stream" end)
 function level1:init()
 	waveTimer = 12
 	waveTimerMax = 12
-
-	coolDown = 0
 end
 
 function level1:enter(previous, ...)
@@ -43,6 +42,11 @@ function level1:enter(previous, ...)
 
 	files = {}
 	scissors = {}
+
+	cooldown = 0
+	controlCooldown = 0.3
+
+	pressed = {"q" = false, "w" = false, "e" = false, "r" = false, " " = false}
 end
 
 function level1:update(dt)
@@ -68,7 +72,21 @@ function level1:update(dt)
 		end
 	end
 
+	for k1,v1 in pairs(fingers) do
+		if love.keyboard.isDown(v1) then
+			pressed[v1] = true
+		end
+	end
 
+	controlCooldown = controlCooldown - dt
+	if controlCooldown <= 0 then
+		for k,v in pairs(pressed) do
+			if v == true then
+				fire(k)
+			end
+			pressed[k] = false
+		end
+	end
 end
 
 function level1:draw()
