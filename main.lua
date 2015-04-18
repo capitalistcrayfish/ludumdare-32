@@ -14,11 +14,7 @@ local boss1 = {}
 
 love.graphics.setNewFont(32)
 
-manus = {status = neutral, x = 450, y = 600, img = nil}
-speed = 100
-fingers = ["q", "w", "e", "r", " "]
 
--- Manage resources (created by vrld's Princess):
 local function Proxy(f)
 	return setmetatable({}, {__index = function(self, k)
 		local v = f(k)
@@ -27,7 +23,7 @@ local function Proxy(f)
 	end})
 end
 
-Img = Proxy( function(k) return loves.graphics.newImage("img/"..k..".png") end)
+Img = Proxy( function(k) return love.graphics.newImage("img/"..k..".png") end)
 Sound = Proxy(function(k) return love.sound.newSoundData("sound/"..k..".ogg") end)
 Music = Proxy(function(k) return k, "stream" end)
 
@@ -46,7 +42,7 @@ function level1:enter(previous, ...)
 	cooldown = 0
 	controlCooldown = 0.3
 
-	pressed = {"q" = false, "w" = false, "e" = false, "r" = false, " " = false}
+	pressed = {q = false, w = false, e = false, r = false, space = false}
 end
 
 function level1:update(dt)
@@ -57,24 +53,28 @@ function level1:update(dt)
 		end
 	end
 	if love.keyboard.isDown("right") then
-		if manus.x < love.graphics.getWidth() - manus.img:getWidth() then
+		if manus.x < love.graphics.getWidth() - Img.playerPH:getWidth() then
 			manus.x = manus.x + (speed * dt)
 		end
 	end
 	if love.keyboard.isDown("up") then
-		if manus.y > then
+		if manus.y > 0 then
 			manus.y = manus.y - (0.5 * speed * dt)
 		end
 	end
 	if love.keyboard.isDown("down") then
-		if manus.y < love.graphics.getHeight() - manus.img:getHeight() then
+		if manus.y < love.graphics.getHeight() - Img.playerPH:getHeight() then
 			manus.y = manus.y + (0.5 * speed * dt)
 		end
 	end
 
 	for k1,v1 in pairs(fingers) do
 		if love.keyboard.isDown(v1) then
-			pressed[v1] = true
+			if v1 == " " then
+				pressed[space] = true
+			else
+				pressed[v1] = true
+			end
 		end
 	end
 
@@ -90,7 +90,7 @@ function level1:update(dt)
 end
 
 function level1:draw()
-	love.graphics.rectangle("fill", manus.x, manus.y, 50, 50)
+	love.graphics.draw(Img.playerPH, manus.x, manus.y)
 end
 
 function level1:quit()
@@ -108,6 +108,12 @@ end
 
 
 function love.load()
+--	playerImage = love.graphics.newImage("img/playerPH.png")
+--	manus = {status = neutral, x = 450, y = 600, img = love.graphics.newImage("img/playerPH.png") }
+	manus = {status = neutral, x = 450, y = 600 }
+	speed = 220
+	fingers = {"q", "w", "e", "r", " "}
+
 	Gamestate.registerEvents()
 	Gamestate.switch(menu)
 end
