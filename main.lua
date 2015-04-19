@@ -26,7 +26,7 @@ Sound = Proxy(function(k) return love.sound.newSoundData("sound/"..k..".ogg") en
 Music = Proxy(function(k) return k, "stream" end)
 
 local function die(v1, bullet, enemy, type, addScore)
-	if bullet.x > enemy.x and bullet.x + bullet.sprite:getWidth() <= enemy.x + Img.enemy1:getWidth() and bullet.y >= enemy.y and bullet.y + bullet.sprite:getWidth() <= enemy.y + Img.CLIPPER1:getHeight() then
+	if bullet.x > enemy.x and bullet.x + bullet.sprite:getWidth() <= enemy.x + enemy.sprite:getWidth() and bullet.y >= enemy.y and bullet.y + bullet.sprite:getWidth() <= enemy.y + Img.CLIPPER1:getHeight() then
 		-- TODO: sound
 		table.remove(v1.bullets, key)
 		table.remove(type, key2)
@@ -116,25 +116,11 @@ function level1:update(dt)
 			end
 
 			for key2, enemy in pairs(files) do
-				--if bullet.x => enemy.x and bullet.x + bullet.sprite:getWidth() <= enemy.x + Img.enemy1:getWidth() and bullet.y >= enemy.y and bullet.y + bullet.sprite:getWidht() <= enemy.y + Img.enemy1:getHeight() then
-				if bullet.x > enemy.x and bullet.x + bullet.sprite:getWidth() <= enemy.x + Img.enemy1:getWidth() and bullet.y >= enemy.y and bullet.y + bullet.sprite:getWidth() <= enemy.y + Img.CLIPPER1:getHeight() then
-					-- TODO: sound
-					table.remove(v1.bullets, key)
-					table.remove(files, key2)
-
-					score = score + 300
-				end
+				die(v1, bullet, enemy, files, 300)
 			end
 
 			for key2, enemy in pairs(scissors) do
-				--if bullet.x => enemy.x and bullet.x + bullet.sprite:getWidth() <= enemy.x + Img.enemy1:getWidth() and bullet.y >= enemy.y and bullet.y + bullet.sprite:getWidht() <= enemy.y + Img.enemy1:getHeight() then
-				if bullet.x > enemy.x and bullet.x + bullet.sprite:getWidth() <= enemy.x + Img.enemy1:getWidth() and bullet.y >= enemy.y and bullet.y + bullet.sprite:getWidth() <= enemy.y + Img.CLIPPER1:getHeight() then
-					-- TODO: sound
-					table.remove(v1.bullets, key)
-					table.remove(scissors, key2)
-
-					score = score + 300
-				end
+				die(v1, bullet, enemy, scissors, 200)
 			end
 		end
 
@@ -147,7 +133,11 @@ function level1:update(dt)
 				newbullet = {x = v1.loc[1] + v1.shootmod + manus.x, y = v1.loc[2] + manus.y, xmod = v1.bxm, sprite = v1.bulletSprite} -- Create a new bullet
 				table.insert(v1.bullets, newbullet) -- Append the bullet to the list of bullets fired from its finger
 
-				controlCooldown = controlCooldown + 0.3
+				if controlCooldown <= 0 then
+					controlCooldown = 0.15
+				else
+					controlCooldown = controlCooldown * 2
+				end
 				v1.lastShot = 0
 				v1.loc[2] = v1.base[2] + 2
 			end
@@ -171,11 +161,15 @@ function level1:update(dt)
 		waveType = (waveTypes[math.random(1,#waveTypes)])
 
 		if waveType == "single" then
-			for i = 0,10
-			table.insert(clippers, {x = i * 30, y = -10})
+			for i = 0,10 do
+				newClipper = {x = i * 30, y = -10, sprite = Img.CLIPPER1}
+				table.insert(clippers, newClipper)
+			end
 		else
-			for i = 0,10
-			table.insert(clippers, {x = i * 30, y = -10})
+			for i = 0,10 do
+				newClipper = {x = i * 30, y = -10, sprite = Img.CLIPPER1}
+				table.insert(clippers, newClipper)
+			end
 		end
 
 		waveTimer = 0
@@ -251,7 +245,9 @@ function level1:update(dt)
 	end
 
 	-- Edit timers etc.:
-	controlCooldown = controlCooldown - dt
+	if controlCooldown > 0 then
+		controlCooldown = controlCooldown - dt
+	end
 	waveTimer = waveTimer + dt
 
 end
