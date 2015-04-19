@@ -96,6 +96,9 @@ function level1:enter(previous, ...)
 	splodes = {} -- Format:   splodes = { {tim = 0.5, x = 1, y = 1} }
 
 	score, lives = 0, 3
+
+	Sound.loop:play()
+	Sound.loop:setLooping(true)
 end
 
 function level1:update(dt)
@@ -202,7 +205,7 @@ function level1:update(dt)
 	end
 
 	-- Animations:
-	if counter % 2.5 <= 0.2 then
+	if counter % 2.5 <= 0.8 then
 		if manus.sprite == Img.IDLE1 then
 			manus.sprite = Img.IDLE2
 		elseif manus.sprite == Img.IDLE2 then
@@ -238,7 +241,7 @@ function level1:update(dt)
 		elseif waveType == "scissors" then
 			for n = 0,3 do
 				for i = 0,2 do
-					newScissor = {x = 150 + (n * 300), y = -60, sprite = Img.SCISSOR1}
+					newScissor = {x = 150 + (n * 300), y = -60, sprite = Img.SCISSOR1, lastAnim = 0}
 					table.insert(scissors, newScissor)
 				end
 			end
@@ -312,8 +315,9 @@ function level1:update(dt)
 		if v.y > love.graphics.getHeight() then
 			table.remove(scissors, k)
 		end
+		v.lastAnim = v.lastAnim + dt
 
-		if (0.5 * dt) % (7 * dt) >= (0.5 * dt) then
+		if v.lastAnim >= 0.1 then
 			if v.sprite == Img.SCISSOR1 then
 				v.sprite = Img.SCISSOR2
 			elseif v.sprite == Img.SCISSOR2 then
@@ -327,6 +331,7 @@ function level1:update(dt)
 			elseif v.sprite == Img.SCISSOR6 then
 				v.sprite = Img.SCISSOR1
 			end
+			v.lastAnim = 0
 		end
 	end
 
@@ -368,6 +373,7 @@ function level1:update(dt)
 	end
 
 	waveTimer = waveTimer + dt
+	counter = counter + (1 / love.timer.getFPS())
 
 end
 
@@ -448,7 +454,8 @@ function level1:draw()
 end
 
 function gameover:enter(previous, ...)
-
+	Sound.loop:setLooping(false)
+	Sound.loop:stop()
 end
 
 function gameover:draw()
