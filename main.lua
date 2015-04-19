@@ -7,9 +7,11 @@
 
 local Gamestate = require "libs/HUMP/gamestate" -- Import Gamestate module
 
+local splash = {}
 local menu = {} -- Define gamestates
 local cutscene = {}
 local level1 = {}
+local gameover = {}
 
 printing = ""
 
@@ -26,16 +28,26 @@ Sound = Proxy(function(k) return love.audio.newSource(love.sound.newSoundData("s
 Music = Proxy(function(k) return k, "stream" end)
 
 local function die(v1, bullet, enemy, second, type, addScore)
-	if bullet.x > enemy.x and bullet.x + bullet.sprite:getWidth() <= enemy.x + enemy.sprite:getWidth() and bullet.y >= enemy.y and bullet.y + bullet.sprite:getWidth() <= enemy.y + enemy.sprite:getHeight() then
+	if bullet.x > enemy.x and bullet.x + bullet.sprite:getWidth() <= enemy.x + enemy.sprite:getWidth() and bullet.y >= enemy.y and bullet.y + bullet.sprite:getWidth() <= enemy.y + (enemy.sprite:getHeight() / 2) then
 		-- TODO: sound
 
-		newSplode = {tim = 100.6, x = bullet.x, y = bullet.y}
-		table.insert(splodes, newSPlode)
+		newSplode = {tim = 0.3, x = bullet.x, y = bullet.y}
+		table.insert(splodes, newSplode)
 
-		table.remove(v1.bullets, key)
+		table.remove(v1, key)
 		table.remove(type, second)
 
 		score = score + addScore
+	end
+end
+
+local function loselive(baddie)
+	if baddie.x > manus.x and baddie.x + baddie.sprite:getWidth() <= manus.x + manus.sprite:getWidth() and baddie.y >= manus.y and baddie.y + baddie.sprite:getWidth() <= manus.y + (manus.sprite:getHeight() / 2) then
+
+		newSplode = {tim = 0.3, x = baddie.x + 30, y = baddie.y + 30}
+		table.insert(splodes, newSplode)
+
+		lives = lives - 1
 	end
 end
 
@@ -44,16 +56,17 @@ function level1:init()
 
 	pinkySprite, ringSprite, middleSprite, indexSprite, thumbSprite = Img.PINKY1, Img.RING1, Img.MIDDLE1, Img.INDEX1, Img.THUMB1
 
-	waveTypes = {"single", "double", "triangle"} -- Define wavetypes
-
-	counter = 0
+	waveTypes = {"single", "double", "scissors", "file"} -- Define wavetypes
 end
 
 function level1:enter(previous, ...)
+	love.audio.stop()
+
 	files, clippers, scissors = {}, {}, {} -- Arrays of enemies
 
 	controlCooldown = 0.3
 	waveTimer = 60
+	counter = 0
 
 	fPinky = {base = {-22, 7 - Img.PINKY1:getHeight()}, loc = {-22, 7 - Img.PINKY1:getHeight()}, sprite = pinkySprite, shootmod = 3, bullets = {}, lastShot = 999, id = "q", bxm = -0.4, bulletSprite = Img.PLASER1, useSprite = "default", fSprite = Img.PINKY2}
 	fRing = {base = {2, 5 - Img.RING1:getHeight()}, loc = {2, 5 - Img.RING1:getHeight()}, sprite = ringSprite, shootmod = 10, bullets = {}, lastShot = 999, id = "w", bxm = -0.25, bulletSprite = Img.RLASER1, useSprite = "default", fSprite = Img.RING2}
@@ -63,7 +76,7 @@ function level1:enter(previous, ...)
 
 	allFingers = {fPinky, fRing, fMiddle, fIndex, fThumb}
 
-	newWave = 10
+	newWave = 5
 
 	terrain = {grass = {}, palms = {}, turrets = {}}
 
@@ -73,10 +86,14 @@ function level1:enter(previous, ...)
 
 	splodes = {} -- Format:   splodes = { {tim = 0.5, x = 1, y = 1} }
 
-	score = 0
+	score, lives = 0, 3
 end
 
 function level1:update(dt)
+
+	if lives == 0 then
+		Gamestate.switch(gameover)
+	end
 
 	if love.keyboard.isDown("left") then
 		if manus.x > 0 then
@@ -99,7 +116,7 @@ function level1:update(dt)
 		end
 	end
 	if love.keyboard.isDown("rctrl") then
-		debug.debug()
+		debugmode = true
 	end
 
 	tempCooldown = controlCooldown
@@ -116,15 +133,18 @@ function level1:update(dt)
 			end
 
 			for key2, enemy in pairs(clippers) do
-				die(v1, bullet, enemy, key2, clippers, 100)
+				die(v1.bullets, bullet, enemy, key2, clippers, 100)
+				loselive(enemy)
 			end
 
 			for key2, enemy in pairs(files) do
-				die(v1, bullet, enemy, key2, files, 300)
+				die(v1.bullets, bullet, enemy, key2, files, 300)
+				loselive(enemy)
 			end
 
 			for key2, enemy in pairs(scissors) do
-				die(v1, bullet, enemy, key2, scissors, 200)
+				die(v1.bullets, bullet, enemy, key2, scissors, 200)
+				loselive(enemy)
 			end
 		end
 
@@ -133,27 +153,37 @@ function level1:update(dt)
 			v1.useSprite = "default"
 		end
 
-		if tempCooldown <= 0 then
-			if love.keyboard.isDown(v1.id) then
-				newbullet = {x = v1.loc[1] + v1.shootmod + manus.x, y = v1.loc[2] + manus.y, xmod = v1.bxm, sprite = v1.bulletSprite} -- Create a new bullet
-				table.insert(v1.bullets, newbullet) -- Append the bullet to the list of bullets fired from its finger
+		if manus.state == "default" then
+			if tempCooldown <= 0 then
+				if love.keyboard.isDown(v1.id) then
+					newbullet = {x = v1.loc[1] + v1.shootmod + manus.x, y = v1.loc[2] + manus.y, xmod = v1.bxm, sprite = v1.bulletSprite} -- Create a new bullet
+					table.insert(v1.bullets, newbullet) -- Append the bullet to the list of bullets fired from its finger
 
-				if controlCooldown <= 0 then
-					controlCooldown = 0.15
-				else
-					controlCooldown = controlCooldown * 2
+					if controlCooldown <= 0 then
+						controlCooldown = 0.4
+					else
+						controlCooldown = controlCooldown * 1.3
+					end
+					v1.lastShot = 0
+
+					v1.loc[2] = v1.base[2] + 2
+					v1.useSprite = "fire"
 				end
-				v1.lastShot = 0
-
-				v1.loc[2] = v1.base[2] + 2
-				v1.useSprite = "fire"
 			end
 		end
 
 		v1.lastShot = v1.lastShot + dt
 	end
 
-	if counter % 2.5 <= 1 then
+	if love.keyboard.isDown("y", "u", "i", "o", "h", "j", "k", "l", "b", "n", "m", ";", ",", ".") then
+		manus.state = "stomp"
+	end
+
+	if manus.state == "stomp" then
+		-- TODO
+	end
+
+	if counter % 2.5 <= 0.2 then
 		if manus.sprite == Img.IDLE1 then
 			manus.sprite = Img.IDLE2
 		elseif manus.sprite == Img.IDLE2 then
@@ -167,16 +197,33 @@ function level1:update(dt)
 		math.randomseed(os.time())
 		waveType = (waveTypes[math.random(1,#waveTypes)])
 
+		printing = waveType
+
 		if waveType == "single" then
 			for i = 0,10 do
-				newClipper = {x = i * 30, y = -10, sprite = Img.CLIPPER1}
+
+				newClipper = {x = 10 + (i * 80), y = -60, sprite = Img.CLIPPER1}
 				table.insert(clippers, newClipper)
 			end
-		else
+		elseif waveType == "double" then
 			for i = 0,10 do
-				newClipper = {x = i * 30, y = -10, sprite = Img.CLIPPER1}
+				newClipper = {x = 10 + (i * 80), y = -60, sprite = Img.CLIPPER1}
 				table.insert(clippers, newClipper)
 			end
+			for i = 0,10 do
+				newClipper = {x = 10 + (i * 80), y = -120, sprite = Img.CLIPPER1}
+				table.insert(clippers, newClipper)
+			end
+		elseif waveType == "scissors" then
+			for n = 0,3 do
+				for i = 0,2 do
+					newScissor = {x = 150 + (n * 300), y = -60, sprite = Img.SCISSOR1}
+					table.insert(scissors, newScissor)
+				end
+			end
+		elseif waveType == "file" then
+			newFile = {x = 450 - (Img.FILE1:getWidth() / 2), start = 450 - (Img.FILE1:getWidth() / 2), y = 0, sprite = FILE1, tim = 0.5, sprite = Img.FILE1, dir = "right"}
+			table.insert(files, newFile)
 		end
 
 		waveTimer = 0
@@ -185,18 +232,20 @@ function level1:update(dt)
 	-- Mob movements:
 
 	for k,v in pairs(clippers) do
-		v.y = v.y + (140 * dt)
-		if v.y + 70 >= love.graphics.getHeight() then
+		v.y = v.y + (200 * dt)
+		if v.y + Img.CLIPPER1:getHeight() > love.graphics.getHeight() then
 			table.remove(clippers, k)
 		end
 	end
 
 	for k,v in pairs(files) do
 		-- file.start, file.dir
+		v.y = v.y + (60 * dt)
 		if v.dir == "right" then
-			if v.x >= v.start + 30 then
+			v.x = v.x + (300 * dt)
+			if v.x >= v.start + 300 then
 				v.dir = "rs"
-				v.tim = 0.5
+				v.tim = 0.2
 				v.sprite = Img.FILE3R
 			elseif v.x > v.start + 4 then
 				v.sprite = Img.FILE2R
@@ -206,9 +255,10 @@ function level1:update(dt)
 				v.sprite = Img.FILE1
 			end
 		elseif v.dir == "left" then
-			if v.x <= v.start - 30 then
+			v.x = v.x - (300 * dt)
+			if v.x <= v.start - 300 then
 				v.dir = "ls"
-				v.tim = 0.5
+				v.tim = 0.2
 				v.sprite = Img.FILE3
 			elseif v.x > v.start + 4 then
 				v.sprite = Img.FILE2R
@@ -231,18 +281,19 @@ function level1:update(dt)
 	end
 
 	for k,v in pairs(scissors) do
-		v.y = v.y + (120 * dt)
+		v.y = v.y + (140 * dt)
 		if v.x < manus.x + manus.sprite:getWidth() / 2 then
 			v.x = v.x + (20 * dt)
 		else
 			v.x = v.x - (20 * dt)
 		end
-		if v.y + v.sprite:getHeight() > love.graphics.getHeight() then
+		if v.y > love.graphics.getHeight() then
 			table.remove(scissors, k)
 		end
 	end
 
 	for k,v in pairs(splodes) do
+		v.tim = v.tim - dt
 		if v.tim <= 0 then
 			table.remove(splodes, k)
 		end
@@ -251,7 +302,6 @@ function level1:update(dt)
 	-- Terrain mutations:
 	for k,v in pairs(terrain.grass) do
 		v.y = v.y + (120 * dt)
-		--printing = printing..tostring(v.y).."\n"
 		if v.y > love.graphics.getHeight() then
 			v.y = 2 * -1 * Img.grass:getHeight()
 		end
@@ -270,17 +320,21 @@ function level1:draw()
 		love.graphics.draw(Img.grass, v.x, v.y)
 	end
 
-	love.graphics.print("FPS:"..tostring(love.timer.getFPS()))
-	love.graphics.print("\n"..printing.."\n"..waveTimer.."\n"..newWave)
+	if debugmode == true then
+		love.graphics.print("\n\n\n\n".."FPS:"..tostring(love.timer.getFPS()))
+		love.graphics.print("\n"..printing.."\n"..waveTimer.."\n"..newWave)
+	end
+
+	love.graphics.print("Score: "..score.."\n".."Lives: "..lives)
 
 	love.graphics.draw(manus.sprite, manus.x, manus.y) -- Draw Manus
 
 	for k,v in pairs(allFingers) do
 		if v.useSprite == "default" then
 			love.graphics.draw(v.sprite, manus.x + v.loc[1], manus.y + v.loc[2]) -- Draw the fingers
-			elseif v.useSprite == "fire" then
-				love.graphics.draw(v.fSprite, manus.x + v.loc[1], manus.y + v.loc[2]) -- Draw the fingers
-			end
+		elseif v.useSprite == "fire" then
+			love.graphics.draw(v.fSprite, manus.x + v.loc[1], manus.y + v.loc[2]) -- Draw the fingers
+		end
 
 		for key, bullet in pairs(v.bullets) do
 			love.graphics.draw(bullet.sprite, bullet.x, bullet.y) -- Draw the player bullets
@@ -300,14 +354,22 @@ function level1:draw()
 	end
 
 	for k,v in pairs(splodes) do
-		if v.tim == 5 or 6 then
+		if v.tim > 0.2 then
 			love.graphics.draw(Img.EXPLOSION, v.x, v.y)
-		elseif v.tim == 3 or 4 then
-			love.graphics.draw(Img.EXPLOSION2, v.x, v.y)
-		else
+		elseif v.tim <= 0.1 then
 			love.graphics.draw(Img.EXPLOSION3, v.x, v.y)
+		else
+			love.graphics.draw(Img.EXPLOSION2, v.x, v.y)
 		end
 	end
+end
+
+function gameover:enter(previous, ...)
+
+end
+
+function gameover:draw()
+	love.graphics.print("Good job, ur ded\n".."Score:"..score)
 end
 
 function menu:enter(previous, ...)
@@ -325,11 +387,37 @@ function menu:draw()
 end
 
 function love.load()
-	love.graphics.setFont(love.graphics.newFont(18))
+	-- General stuff:
+	debugmode = false
+	love.graphics.setFont(love.graphics.newFont("font/Ubuntu-R.ttf", 30))
 	manusStart = Img.IDLE1
-	manus = {status = "neutral", x = 300, y = 600, sprite = manusStart }
+	manus = {state = "default", x = 300, y = 600, sprite = manusStart }
 	speed = 220
 
+	-- Splash screen:
+	crayfish = love.graphics.newImage("img/splash/crayfish.png")
+	text = love.graphics.newImage("img/splash/text.png")
+	crayfishObj = { y = -234, target = 50, center = (love.graphics.getWidth() / 2 - 124) }
+	textObj = { y = -500, target = 260, center = (love.graphics.getWidth() / 2 - 326) }
+	frames = 0
+
+	-- Gamestate"
 	Gamestate.registerEvents()
-	Gamestate.switch(menu)
+	Gamestate.switch(splash)
+end
+
+function splash:update(dt)
+	frames = frames + (1 * dt)
+
+	crayfishObj.y = crayfishObj.y + (crayfishObj.target - crayfishObj.y) * 0.1
+	textObj.y = textObj.y + (textObj.target - textObj.y) * 0.1
+
+	if frames % 2900 >= 1 then
+		Gamestate.switch(menu)
+	end
+end
+
+function splash:draw(dt)
+	love.graphics.draw(crayfish, crayfishObj.center, crayfishObj.y)
+	love.graphics.draw(text, textObj.center, textObj.y)
 end
