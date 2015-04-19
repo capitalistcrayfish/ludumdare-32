@@ -353,7 +353,7 @@ function level1:update(dt)
 	for k,v in pairs(terrain.palms) do
 		v.y = v.y + (120 * dt)
 		if v.y > love.graphics.getHeight() then
-			v.y = 2 * -1 * Img.P7ALM1:getHeight()
+			v.y = 2 * -1 * Img.PALM1:getHeight()
 			v.x = math.random() * math.random() * 900
 			v.broken = false
 		end
@@ -384,9 +384,9 @@ function level1:draw()
 
 	for k,v in pairs(terrain.palms) do
 		if v.broken then
-			love.graphics.draw(Img.P7ALM2, v.x, v.y)
+			love.graphics.draw(Img.PALM2, v.x, v.y)
 		else
-			love.graphics.draw(Img.P7ALM1, v.x, v.y)
+			love.graphics.draw(Img.PALM1, v.x, v.y)
 		end
 	end
 
@@ -459,7 +459,10 @@ function gameover:enter(previous, ...)
 end
 
 function gameover:draw()
+	love.graphics.draw(Img.gameover, 0, 0)
+	love.graphics.setFont(justice)
 	love.graphics.print("Good job, ur ded\nScore: "..score)
+	love.graphics.setFont(ubuntu)
 end
 
 function menu:enter(previous, ...)
