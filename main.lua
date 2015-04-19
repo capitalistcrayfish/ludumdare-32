@@ -97,9 +97,9 @@ function level1:update(dt)
 
 		if tempCooldown <= 0 then
 			if love.keyboard.isDown(v1.id) then
-				newbullet = {x = v1.loc[1] + v1.shootmod, y = v1.loc[2]} -- Create a new bullet
-				--newbullet = {x = 40, y = 800}
+				newbullet = {x = v1.loc[1] + v1.shootmod + manus.x, y = v1.loc[2] + manus.y} -- Create a new bullet
 				table.insert(v1.bullets, newbullet) -- Append the bullet to the list of bullets fired from its finger
+
 				controlCooldown = controlCooldown + 0.3
 				v1.lastShot = 0
 				v1.loc[2] = v1.base[2] + 2
@@ -124,7 +124,6 @@ function level1:update(dt)
 		for n = 0, 8 do
 			waveType = waveTypes[math.random(1,3)]
 		end
-		--printing = waveType
 
 		if waveType == "simple" then
 			for n = 0, 10 do
@@ -175,7 +174,7 @@ function level1:update(dt)
 			else
 				v.sprite = Img.FILE1
 			end
-		elseif v.dir = "left" then
+		elseif v.dir == "left" then
 			if v.x <= v.start - 30 then
 				v.dir = "ls"
 				v.tim = 0.5
@@ -189,7 +188,7 @@ function level1:update(dt)
 			end
 		else
 			if v.tim <= 0 then
-				if v.dir = "rs" then
+				if v.dir == "rs" then
 					v.dir = "left"
 				else
 					v.dir = "right"
@@ -241,7 +240,7 @@ function menu:keyreleased(key, code)
 end
 
 function menu:draw()
-	love.graphics.print("Menu\nWork In Progress\nPress ENTER")
+	love.graphics.draw(Img.title, 0, 0)
 end
 
 function love.load()
