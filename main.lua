@@ -22,14 +22,18 @@ local function Proxy(f) -- Proxy function for sprites and audio
 end
 
 Img = Proxy( function(k) return love.graphics.newImage("img/"..k..".png") end) -- Proxy images and sound
-Sound = Proxy(function(k) return love.sound.newSoundData("sound/"..k..".ogg") end)
+Sound = Proxy(function(k) return love.audio.newSource(love.sound.newSoundData("sound/"..k..".ogg")) end)
 Music = Proxy(function(k) return k, "stream" end)
 
-local function die(v1, bullet, enemy, type, addScore)
-	if bullet.x > enemy.x and bullet.x + bullet.sprite:getWidth() <= enemy.x + enemy.sprite:getWidth() and bullet.y >= enemy.y and bullet.y + bullet.sprite:getWidth() <= enemy.y + Img.CLIPPER1:getHeight() then
+local function die(v1, bullet, enemy, second, type, addScore)
+	if bullet.x > enemy.x and bullet.x + bullet.sprite:getWidth() <= enemy.x + enemy.sprite:getWidth() and bullet.y >= enemy.y and bullet.y + bullet.sprite:getWidth() <= enemy.y + enemy.sprite:getHeight() then
 		-- TODO: sound
+
+		newSplode = {tim = 100.6, x = bullet.x, y = bullet.y}
+		table.insert(splodes, newSPlode)
+
 		table.remove(v1.bullets, key)
-		table.remove(type, key2)
+		table.remove(type, second)
 
 		score = score + addScore
 	end
@@ -51,11 +55,11 @@ function level1:enter(previous, ...)
 	controlCooldown = 0.3
 	waveTimer = 60
 
-	fPinky = {base = {-22, 7 - Img.PINKY1:getHeight()}, loc = {-22, 7 - Img.PINKY1:getHeight()}, sprite = pinkySprite, shootmod = 3, bullets = {}, lastShot = 999, id = "q", bxm = -0.4, bulletSprite = Img.PLASER1}
-	fRing = {base = {2, 5 - Img.RING1:getHeight()}, loc = {2, 5 - Img.RING1:getHeight()}, sprite = ringSprite, shootmod = 10, bullets = {}, lastShot = 999, id = "w", bxm = -0.25, bulletSprite = Img.RLASER1}
-	fMiddle = {base = {46, 2 - Img.MIDDLE1:getHeight()}, loc = {46, 2 - Img.MIDDLE1:getHeight()}, sprite = middleSprite, shootmod = 15, bullets = {}, lastShot = 999, id = "e", bxm = 0, bulletSprite = Img.MLASER1}
-	fIndex = {base = {70, 5 - Img.INDEX1:getHeight()}, loc = {70, 5 - Img.INDEX1:getHeight()}, sprite = indexSprite, shootmod = 36, bullets = {}, lastShot = 999, id = "r", bxm = 0.4, bulletSprite = Img.ILASER1}
-	fThumb = {base = {91, 51 - Img.THUMB1:getHeight()}, loc = {91, 51 - Img.THUMB1:getHeight()}, sprite = thumbSprite, shootmod = 56, bullets = {}, lastShot = 999, id = " ", bxm = 0.9, bulletSprite = Img.TLASER1}
+	fPinky = {base = {-22, 7 - Img.PINKY1:getHeight()}, loc = {-22, 7 - Img.PINKY1:getHeight()}, sprite = pinkySprite, shootmod = 3, bullets = {}, lastShot = 999, id = "q", bxm = -0.4, bulletSprite = Img.PLASER1, useSprite = "default", fSprite = Img.PINKY2}
+	fRing = {base = {2, 5 - Img.RING1:getHeight()}, loc = {2, 5 - Img.RING1:getHeight()}, sprite = ringSprite, shootmod = 10, bullets = {}, lastShot = 999, id = "w", bxm = -0.25, bulletSprite = Img.RLASER1, useSprite = "default", fSprite = Img.RING2}
+	fMiddle = {base = {46, 2 - Img.MIDDLE1:getHeight()}, loc = {46, 2 - Img.MIDDLE1:getHeight()}, sprite = middleSprite, shootmod = 15, bullets = {}, lastShot = 999, id = "e", bxm = 0, bulletSprite = Img.MLASER1, useSprite = "default", fSprite = Img.MIDDLE2}
+	fIndex = {base = {70, 5 - Img.INDEX1:getHeight()}, loc = {70, 5 - Img.INDEX1:getHeight()}, sprite = indexSprite, shootmod = 36, bullets = {}, lastShot = 999, id = "r", bxm = 0.4, bulletSprite = Img.ILASER1, useSprite = "default", fSprite = Img.INDEX2}
+	fThumb = {base = {91, 51 - Img.THUMB1:getHeight()}, loc = {91, 51 - Img.THUMB1:getHeight()}, sprite = thumbSprite, shootmod = 56, bullets = {}, lastShot = 999, id = " ", bxm = 0.9, bulletSprite = Img.TLASER1, useSprite = "default", fSprite = Img.THUMB2}
 
 	allFingers = {fPinky, fRing, fMiddle, fIndex, fThumb}
 
@@ -112,20 +116,21 @@ function level1:update(dt)
 			end
 
 			for key2, enemy in pairs(clippers) do
-				die(v1, bullet, enemy, clippers, 100)
+				die(v1, bullet, enemy, key2, clippers, 100)
 			end
 
 			for key2, enemy in pairs(files) do
-				die(v1, bullet, enemy, files, 300)
+				die(v1, bullet, enemy, key2, files, 300)
 			end
 
 			for key2, enemy in pairs(scissors) do
-				die(v1, bullet, enemy, scissors, 200)
+				die(v1, bullet, enemy, key2, scissors, 200)
 			end
 		end
 
 		if v1.lastShot >= 0.3 then
 			v1.loc[2] = v1.base[2]
+			v1.useSprite = "default"
 		end
 
 		if tempCooldown <= 0 then
@@ -139,7 +144,9 @@ function level1:update(dt)
 					controlCooldown = controlCooldown * 2
 				end
 				v1.lastShot = 0
+
 				v1.loc[2] = v1.base[2] + 2
+				v1.useSprite = "fire"
 			end
 		end
 
@@ -235,6 +242,12 @@ function level1:update(dt)
 		end
 	end
 
+	for k,v in pairs(splodes) do
+		if v.tim <= 0 then
+			table.remove(splodes, k)
+		end
+	end
+
 	-- Terrain mutations:
 	for k,v in pairs(terrain.grass) do
 		v.y = v.y + (120 * dt)
@@ -263,7 +276,11 @@ function level1:draw()
 	love.graphics.draw(manus.sprite, manus.x, manus.y) -- Draw Manus
 
 	for k,v in pairs(allFingers) do
-		love.graphics.draw(v.sprite, manus.x + v.loc[1], manus.y + v.loc[2]) -- Draw the fingers
+		if v.useSprite == "default" then
+			love.graphics.draw(v.sprite, manus.x + v.loc[1], manus.y + v.loc[2]) -- Draw the fingers
+			elseif v.useSprite == "fire" then
+				love.graphics.draw(v.fSprite, manus.x + v.loc[1], manus.y + v.loc[2]) -- Draw the fingers
+			end
 
 		for key, bullet in pairs(v.bullets) do
 			love.graphics.draw(bullet.sprite, bullet.x, bullet.y) -- Draw the player bullets
@@ -281,6 +298,20 @@ function level1:draw()
 	for k, v in pairs(scissors) do
 		love.graphics.draw(v.sprite, v.x, v.y)
 	end
+
+	for k,v in pairs(splodes) do
+		if v.tim == 5 or 6 then
+			love.graphics.draw(Img.EXPLOSION, v.x, v.y)
+		elseif v.tim == 3 or 4 then
+			love.graphics.draw(Img.EXPLOSION2, v.x, v.y)
+		else
+			love.graphics.draw(Img.EXPLOSION3, v.x, v.y)
+		end
+	end
+end
+
+function menu:enter(previous, ...)
+	love.audio.play(Sound.title)
 end
 
 function menu:keyreleased(key, code)
