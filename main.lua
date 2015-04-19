@@ -25,7 +25,6 @@ end
 
 Img = Proxy( function(k) return love.graphics.newImage("img/"..k..".png") end) -- Proxy images and sound
 Sound = Proxy(function(k) return love.audio.newSource(love.sound.newSoundData("sound/"..k..".ogg")) end)
-Music = Proxy(function(k) return k, "stream" end)
 
 local function die(v1, bullet, enemy, second, type, addScore)
 	if bullet.x > enemy.x and bullet.x + bullet.sprite:getWidth() <= enemy.x + enemy.sprite:getWidth() and bullet.y >= enemy.y and bullet.y + bullet.sprite:getWidth() <= enemy.y + (enemy.sprite:getHeight() / 2) then
@@ -42,7 +41,10 @@ local function die(v1, bullet, enemy, second, type, addScore)
 end
 
 local function loselive(baddie)
-	if baddie.x > manus.x and baddie.x <= manus.x + manus.sprite:getWidth() and baddie.y >= manus.y and baddie.y <= manus.y + (manus.sprite:getHeight() / 2) then
+	if baddie.x < manus.x + manus.sprite:getWidth() and
+		manus.x < baddie.x + baddie.sprite:getWidth() and
+		baddie.y < manus.y + manus.sprite:getHeight() and
+		manus.y < baddie.y + baddie.sprite:getHeight() then
 
 		newSplode = {tim = 0.3, x = baddie.x + (baddie.sprite:getWidth() / 2), y = baddie.y + (baddie.sprite:getHeight() / 2)}
 		table.insert(splodes, newSplode)
@@ -87,6 +89,10 @@ function level1:enter(previous, ...)
 		table.insert(terrain.grass, {x = 0, y = i * 100})
 	end
 
+	for i = 1,50 do
+		table.insert(terrain.palms, {x = math.random() * math.random() * 900, y = math.random() * math.random() * 900, broken = false})
+	end
+
 	splodes = {} -- Format:   splodes = { {tim = 0.5, x = 1, y = 1} }
 
 	score, lives = 0, 3
@@ -94,10 +100,12 @@ end
 
 function level1:update(dt)
 
+	-- Check if still alive:
 	if lives == 0 then
 		Gamestate.switch(gameover)
 	end
 
+	-- User input:
 	if love.keyboard.isDown("left") then
 		if manus.x > 0 then
 			manus.x = manus.x - (speed * dt)
@@ -184,6 +192,7 @@ function level1:update(dt)
 		v1.lastShot = v1.lastShot + dt
 	end
 
+	-- Stomping:
 	if love.keyboard.isDown("y", "u", "i", "o", "h", "j", "k", "l", "b", "n", "m", ";", ",", ".") then
 		manus.state = "stomp"
 	end
@@ -192,6 +201,7 @@ function level1:update(dt)
 		-- TODO
 	end
 
+	-- Animations:
 	if counter % 2.5 <= 0.2 then
 		if manus.sprite == Img.IDLE1 then
 			manus.sprite = Img.IDLE2
@@ -202,6 +212,8 @@ function level1:update(dt)
 		end
 	end
 
+
+	-- Spawn waves:
 	if waveTimer >= newWave then
 		math.randomseed(os.time())
 		waveType = (waveTypes[math.random(1,#waveTypes)])
@@ -296,8 +308,25 @@ function level1:update(dt)
 		else
 			v.x = v.x - (20 * dt)
 		end
+
 		if v.y > love.graphics.getHeight() then
 			table.remove(scissors, k)
+		end
+
+		if (0.5 * dt) % (7 * dt) >= (0.5 * dt) then
+			if v.sprite == Img.SCISSOR1 then
+				v.sprite = Img.SCISSOR2
+			elseif v.sprite == Img.SCISSOR2 then
+				v.sprite = Img.SCISSOR3
+			elseif v.sprite == Img.SCISSOR3 then
+				v.sprite = Img.SCISSOR4
+			elseif v.sprite == Img.SCISSOR4 then
+				v.sprite = Img.SCISSOR5
+			elseif v.sprite == Img.SCISSOR5 then
+				v.sprite = Img.SCISSOR6
+			elseif v.sprite == Img.SCISSOR6 then
+				v.sprite = Img.SCISSOR1
+			end
 		end
 	end
 
@@ -313,6 +342,15 @@ function level1:update(dt)
 		v.y = v.y + (120 * dt)
 		if v.y > love.graphics.getHeight() then
 			v.y = 2 * -1 * Img.grass:getHeight()
+		end
+	end
+
+	for k,v in pairs(terrain.palms) do
+		v.y = v.y + (120 * dt)
+		if v.y > love.graphics.getHeight() then
+			v.y = 2 * -1 * Img.P7ALM1:getHeight()
+			v.x = math.random() * math.random() * 900
+			v.broken = false
 		end
 	end
 
@@ -335,7 +373,15 @@ end
 
 function level1:draw()
 	for k,v in pairs(terrain.grass) do
-		love.graphics.draw(Img.grass, v.x, v.y)
+		love.graphics.draw(Img.grass1, v.x, v.y)
+	end
+
+	for k,v in pairs(terrain.palms) do
+		if v.broken then
+			love.graphics.draw(Img.P7ALM2, v.x, v.y)
+		else
+			love.graphics.draw(Img.P7ALM1, v.x, v.y)
+		end
 	end
 
 	if debugmode == true then
@@ -359,7 +405,7 @@ function level1:draw()
 			end
 		end
 	elseif manus.invul == true then
-		if manus.invultim % 1.1 <= 0.9 then
+		if manus.invultim % 1.1 <= 1.2  then
 			love.graphics.draw(manus.sprite, manus.x, manus.y) -- Draw Manus
 
 			for k,v in pairs(allFingers) do
@@ -406,7 +452,7 @@ function gameover:enter(previous, ...)
 end
 
 function gameover:draw()
-	love.graphics.print("Good job, ur ded\n".."Score:"..score)
+	love.graphics.print("Good job, ur ded\nScore: "..score)
 end
 
 function menu:enter(previous, ...)
@@ -421,12 +467,17 @@ end
 
 function menu:draw()
 	love.graphics.draw(Img.title, 0, 0)
+	love.graphics.setFont(justice)
+	love.graphics.printf("PRESS ENTER", 0, 450, 900, "center")
+	love.graphics.setFont(ubuntu)
 end
 
 function love.load()
 	-- General stuff:
 	debugmode = false
-	love.graphics.setFont(love.graphics.newFont("font/Ubuntu-R.ttf", 30))
+	ubuntu = love.graphics.newFont("font/Ubuntu-R.ttf", 30)
+	justice = love.graphics.newFont("font/justice.ttf", 30)
+	love.graphics.setFont(ubuntu)
 	manusStart = Img.IDLE1
 	manus = {state = "default", x = 300, y = 600, sprite = manusStart, invul = false, invultim = 0}
 	speed = 220
