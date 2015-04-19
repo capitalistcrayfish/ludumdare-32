@@ -41,11 +41,11 @@ function level1:enter(previous, ...)
 	controlCooldown = 0.3
 	waveTimer = 60
 
-	fPinky = {base = {-22, 7 - Img.PINKY1:getHeight()}, loc = {-22, 7 - Img.PINKY1:getHeight()}, sprite = pinkySprite, shootmod = 13, bullets = {}, lastShot = 999, id = "q"}
-	fRing = {base = {2, 5 - Img.RING1:getHeight()}, loc = {2, 5 - Img.RING1:getHeight()}, sprite = ringSprite, shootmod = 15, bullets = {}, lastShot = 999, id = "w"}
-	fMiddle = {base = {46, 2 - Img.MIDDLE1:getHeight()}, loc = {46, 2 - Img.MIDDLE1:getHeight()}, sprite = middleSprite, shootmod = 15, bullets = {}, lastShot = 999, id = "e"}
-	fIndex = {base = {70, 5 - Img.INDEX1:getHeight()}, loc = {70, 5 - Img.INDEX1:getHeight()}, sprite = indexSprite, shootmod = 36, bullets = {}, lastShot = 999, id = "r"}
-	fThumb = {base = {91, 49 - Img.THUMB1:getHeight()}, loc = {91, 49 - Img.THUMB1:getHeight()}, sprite = thumbSprite, shootmod = 46, bullets = {}, lastShot = 999, id = " "}
+	fPinky = {base = {-22, 7 - Img.PINKY1:getHeight()}, loc = {-22, 7 - Img.PINKY1:getHeight()}, sprite = pinkySprite, shootmod = 13, bullets = {}, lastShot = 999, id = "q", bxm = -0.4, bulletSprite = PLASER1}
+	fRing = {base = {2, 5 - Img.RING1:getHeight()}, loc = {2, 5 - Img.RING1:getHeight()}, sprite = ringSprite, shootmod = 15, bullets = {}, lastShot = 999, id = "w", bxm = -0.25, bulletSprite = RLASER1}
+	fMiddle = {base = {46, 2 - Img.MIDDLE1:getHeight()}, loc = {46, 2 - Img.MIDDLE1:getHeight()}, sprite = middleSprite, shootmod = 15, bullets = {}, lastShot = 999, id = "e", bxm = 0, bulletSprite = MLASER1}
+	fIndex = {base = {70, 5 - Img.INDEX1:getHeight()}, loc = {70, 5 - Img.INDEX1:getHeight()}, sprite = indexSprite, shootmod = 36, bullets = {}, lastShot = 999, id = "r", bxm = 0.4, bulletSprite = ILASER1}
+	fThumb = {base = {91, 51 - Img.THUMB1:getHeight()}, loc = {91, 51 - Img.THUMB1:getHeight()}, sprite = thumbSprite, shootmod = 56, bullets = {}, lastShot = 999, id = " ", bxm = 0.9, bulletSprite = TLASER1}
 
 	allFingers = {fPinky, fRing, fMiddle, fIndex, fThumb}
 
@@ -92,8 +92,18 @@ function level1:update(dt)
 
 		for key,bullet in pairs(v1.bullets) do
 			bullet.y = bullet.y - (speed * 5 * dt) -- Move the bullets
+			bullet.x = bullet.x + (bullet.xmod * speed * 5 * dt)
 			if bullet.y < 0 then -- If the bullet is out of sight, remove it
 				table.remove(v1, key)
+			end
+
+			for key2, clipper in pairs(clippers) do
+				if bullet.x => clipper.x and bullet.x + bullet.sprite:getWidth() <= clipper.x + Img.CLIPPER1:getWidth() and bullet.y >= clipper.y and bullet.y + bullet.sprite:getWidht() <= clipper.y + Img.CLIPPER1:getHeight() then
+					-- TODO: sound
+					table.remove(v1.bullets, bullet)
+					table.remove(clippers, clipper)
+					end
+				end
 			end
 		end
 
@@ -103,7 +113,7 @@ function level1:update(dt)
 
 		if tempCooldown <= 0 then
 			if love.keyboard.isDown(v1.id) then
-				newbullet = {x = v1.loc[1] + v1.shootmod + manus.x, y = v1.loc[2] + manus.y} -- Create a new bullet
+				newbullet = {x = v1.loc[1] + v1.shootmod + manus.x, y = v1.loc[2] + manus.y, xmod = v1.bxm, sprite = v1.bulletSprite} -- Create a new bullet
 				table.insert(v1.bullets, newbullet) -- Append the bullet to the list of bullets fired from its finger
 
 				controlCooldown = controlCooldown + 0.3
@@ -206,13 +216,11 @@ function level1:update(dt)
 	end
 
 	-- Terrain mutations:
-	for k,v in pairs(terrain) do
-		for k1,v1 in pairs(v) do
-			v1.y = v1.y + (2 * dt)
-			if v1.y > love.graphics.getHeight() then
-				table.remove(v, k1)
-				table.insert(v, {x = 0, y = 2 * -1 * Img.grass:getHeight()})
-			end
+	for k,v in pairs(terrain.grass) do
+		v.y = v.y + (2 * dt)
+		if v.y > love.graphics.getHeight() then
+			table.remove(terrain.grass, k)
+			table.insert(terrain.grass, {x = 0, y = 2 * -1 * Img.grass:getHeight()})
 		end
 	end
 
