@@ -11,11 +11,7 @@ local menu = {} -- Define gamestates
 local cutscene = {}
 local level1 = {}
 
-local function fire(finger)
-	newbullet = {x = finger.base[1] + finger.shootmod,
-					y = finger.base[2]} -- Create a new bullet
-	table.insert(finger.bullets, newbullet) -- Append the bullet to the list of bullets fired from its finger
-end
+printing = ""
 
 local function Proxy(f) -- Proxy function for sprites and audio
 	return setmetatable({}, {__index = function(self, k)
@@ -40,9 +36,10 @@ function level1:init()
 end
 
 function level1:enter(previous, ...)
-	files, clippers = {}, {} -- Arrays of enemies
+	files, clippers, scissors = {}, {}, {} -- Arrays of enemies
 
 	controlCooldown = 0.3
+	waveTimer = 60
 
 	fPinky = {base = {-22, 7 - Img.PINKY1:getHeight()}, loc = {-22, 7 - Img.PINKY1:getHeight()}, sprite = pinkySprite, shootmod = 13, bullets = {}, lastShot = 999, id = "q"}
 	fRing = {base = {2, 5 - Img.RING1:getHeight()}, loc = {2, 5 - Img.RING1:getHeight()}, sprite = ringSprite, shootmod = 15, bullets = {}, lastShot = 999, id = "w"}
@@ -51,6 +48,8 @@ function level1:enter(previous, ...)
 	fThumb = {base = {91, 49 - Img.THUMB1:getHeight()}, loc = {91, 49 - Img.THUMB1:getHeight()}, sprite = thumbSprite, shootmod = 46, bullets = {}, lastShot = 999, id = " "}
 
 	allFingers = {fPinky, fRing, fMiddle, fIndex, fThumb}
+
+	newWave = 100
 end
 
 function level1:update(dt)
@@ -75,27 +74,38 @@ function level1:update(dt)
 			manus.y = manus.y + (0.5 * speed * dt)
 		end
 	end
+	if love.keyboard.isDown("rctrl") then
+		debug.debug()
+	end
+
+	tempCooldown = controlCooldown
 
 	for k1,v1 in pairs(allFingers) do
+
 		v1.lastShot = v1.lastShot + dt -- Append to the shot timer
 
 		for key,bullet in pairs(v1.bullets) do
 			bullet.y = bullet.y - (speed * 5 * dt) -- Move the bullets
-			if bullet.y < 0 then -- If the bullet is out of sight, remove it (slightly amateuristically done here)
+			if bullet.y < 0 then -- If the bullet is out of sight, remove it
 				table.remove(v1, key)
 			end
 		end
 
-		if v1.lastShot >= 0.2 then
-			v1.loc = v1.base
+		if v1.lastShot >= 0.3 then
+			v1.loc[2] = v1.base[2]
 		end
 
-		if controlCooldown <= 0 and love.keyboard.isdown(v1.id) then
-			fire(v1)
-			controlCooldown = 0.5
-			v1.lastShot = 0
-			v1.loc = v1.base + 2
+		if tempCooldown <= 0 then
+			if love.keyboard.isDown(v1.id) then
+				newbullet = {x = v1.base[1] + v1.shootmod, y = v1.base[2]} -- Create a new bullet
+				table.insert(v1.bullets, newbullet) -- Append the bullet to the list of bullets fired from its finger
+				controlCooldown = controlCooldown + 0.3
+				v1.lastShot = 0
+				v1.loc[2] = v1.base[2] + 2
+			end
 		end
+
+		v1.lastShot = v1.lastShot + dt
 	end
 
 	if counter % 2.5 <= 1 then
@@ -107,9 +117,55 @@ function level1:update(dt)
 			manus.sprite = Img.IDLE1
 		end
 	end
+
+	if waveTimer >= newWave then
+		math.randomseed(os.time())
+		for n = 0, 5 do
+			waveType = waveTypes[math.random(1,3)]
+		end
+
+		if waveType == "simple" then
+			for n = 0, 10 do
+				newClipper = {sprite = Img.CLIPPER1, x = 10 + (n * 80), y = 10}
+				table.insert(clippers, newClipper)
+			end
+		elseif waveType == "double" then
+			for n = 0, 10 do
+				newClipper = {sprite = Img.CLIPPER1, x = 10 + (n * 80), y = 10}
+				table.insert(clippers, newClipper)
+			end
+			for n = 0, 10 do
+				newClipper = {sprite = Img.CLIPPER1, x = 10 + (n * 80), y = -60}
+				table.insert(clippers, newClipper)
+			end
+		elseif waveType == "triangle" then
+			for n = 0, 7 do
+				for n2 = 0,2 do
+					newClipper = {sprite = Img.CLIPPER1, x = 10 + (20 * n) - (20 * n2), y = 10 + (60 * n)}
+				end
+			end
+		else
+			printing = "no wave?"
+		end
+		waveTimer = 0
+	end
+
+	for k,v in pairs(clippers) do
+		v.y = v.y + (22 * dt)
+		if v.y + 70 >= love.graphics.getHeight() then
+			table.remove(clippers, k)
+		end
+	end
+
+	-- Edit timers etc.:
+	controlCooldown = controlCooldown - dt
+	waveTimer = waveTimer + dt
+
 end
 
 function level1:draw()
+
+	 love.graphics.print(printing)
 
 	love.graphics.draw(manus.sprite, manus.x, manus.y) -- Draw Manus
 
@@ -119,6 +175,18 @@ function level1:draw()
 		for key, bullet in pairs(v.bullets) do
 			love.graphics.circle("fill", bullet.x, bullet.y, 5, 30) -- Draw the bullet placeholders
 		end
+	end
+
+	for k, v in pairs(clippers) do
+		love.graphics.draw(v.sprite, v.x, v.y)
+	end
+
+	for k, v in pairs(files) do
+		love.graphics.draw(v.sprite, v.x, v.y)
+	end
+
+	for k, v in pairs(scissors) do
+		love.graphics.draw(v.sprite, v.x, v.y)
 	end
 end
 
@@ -133,6 +201,7 @@ function menu:draw()
 end
 
 function love.load()
+	love.graphics.setFont(love.graphics.newFont(18))
 	manusStart = Img.IDLE1
 	manus = {status = "neutral", x = 300, y = 600, sprite = manusStart }
 	speed = 220
