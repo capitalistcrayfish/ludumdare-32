@@ -97,7 +97,8 @@ function level1:update(dt)
 
 		if tempCooldown <= 0 then
 			if love.keyboard.isDown(v1.id) then
-				newbullet = {x = v1.base[1] + v1.shootmod, y = v1.base[2]} -- Create a new bullet
+				newbullet = {x = v1.loc[1] + v1.shootmod, y = v1.loc[2]} -- Create a new bullet
+				--newbullet = {x = 40, y = 800}
 				table.insert(v1.bullets, newbullet) -- Append the bullet to the list of bullets fired from its finger
 				controlCooldown = controlCooldown + 0.3
 				v1.lastShot = 0
@@ -151,10 +152,51 @@ function level1:update(dt)
 		waveTimer = 0
 	end
 
+	-- Mob movements:
+
 	for k,v in pairs(clippers) do
 		v.y = v.y + (22 * dt)
 		if v.y + 70 >= love.graphics.getHeight() then
 			table.remove(clippers, k)
+		end
+	end
+
+	for k,v in pairs(files) do
+		-- file.start, file.dir
+		if v.dir == "right" then
+			if v.x >= v.start + 30 then
+				v.dir = "rs"
+				v.tim = 0.5
+				v.sprite = Img.FILE3R
+			elseif v.x > v.start + 4 then
+				v.sprite = Img.FILE2R
+			elseif v.x < v.start - 4 then
+				v.sprite = Img.FILE2
+			else
+				v.sprite = Img.FILE1
+			end
+		elseif v.dir = "left" then
+			if v.x <= v.start - 30 then
+				v.dir = "ls"
+				v.tim = 0.5
+				v.sprite = Img.FILE3
+			elseif v.x > v.start + 4 then
+				v.sprite = Img.FILE2R
+			elseif v.x < v.start - 4 then
+				v.sprite = Img.FILE2
+			else
+				v.sprite = Img.FILE1
+			end
+		else
+			if v.tim <= 0 then
+				if v.dir = "rs" then
+					v.dir = "left"
+				else
+					v.dir = "right"
+				end
+			else
+				v.tim = v.tim - dt
+			end
 		end
 	end
 
