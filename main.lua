@@ -50,6 +50,12 @@ function level1:enter(previous, ...)
 	allFingers = {fPinky, fRing, fMiddle, fIndex, fThumb}
 
 	newWave = 10
+
+	terrain = {grass = {}, palms = {}, turrets = {}}
+
+	for i = -2,8 do
+		table.insert(terrain.grass, {x = 0, y = i * 124})
+	end
 end
 
 function level1:update(dt)
@@ -154,7 +160,7 @@ function level1:update(dt)
 	-- Mob movements:
 
 	for k,v in pairs(clippers) do
-		v.y = v.y + (22 * dt)
+		v.y = v.y + (88 * dt)
 		if v.y + 70 >= love.graphics.getHeight() then
 			table.remove(clippers, k)
 		end
@@ -199,6 +205,17 @@ function level1:update(dt)
 		end
 	end
 
+	-- Terrain mutations:
+	for k,v in pairs(terrain) do
+		for k1,v1 in pairs(v) do
+			v1.y = v1.y + (2 * dt)
+			if v1.y > love.graphics.getHeight() then
+				table.remove(v, k1)
+				table.insert(v, {x = 0, y = 2 * -1 * Img.grass:getHeight()})
+			end
+		end
+	end
+
 	-- Edit timers etc.:
 	controlCooldown = controlCooldown - dt
 	waveTimer = waveTimer + dt
@@ -206,9 +223,12 @@ function level1:update(dt)
 end
 
 function level1:draw()
+	for k,v in pairs(terrain.grass) do
+		love.graphics.draw(Img.grass, 0, v.y)
+	end
 
 	love.graphics.print("FPS:"..tostring(love.timer.getFPS()))
-	 love.graphics.print("\n"..printing.."\n"..waveTimer.."\n"..newWave)
+	love.graphics.print("\n"..printing.."\n"..waveTimer.."\n"..newWave)
 
 	love.graphics.draw(manus.sprite, manus.x, manus.y) -- Draw Manus
 
