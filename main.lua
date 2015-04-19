@@ -41,11 +41,11 @@ function level1:enter(previous, ...)
 	controlCooldown = 0.3
 	waveTimer = 60
 
-	fPinky = {base = {-22, 7 - Img.PINKY1:getHeight()}, loc = {-22, 7 - Img.PINKY1:getHeight()}, sprite = pinkySprite, shootmod = 13, bullets = {}, lastShot = 999, id = "q", bxm = -0.4, bulletSprite = PLASER1}
-	fRing = {base = {2, 5 - Img.RING1:getHeight()}, loc = {2, 5 - Img.RING1:getHeight()}, sprite = ringSprite, shootmod = 15, bullets = {}, lastShot = 999, id = "w", bxm = -0.25, bulletSprite = RLASER1}
-	fMiddle = {base = {46, 2 - Img.MIDDLE1:getHeight()}, loc = {46, 2 - Img.MIDDLE1:getHeight()}, sprite = middleSprite, shootmod = 15, bullets = {}, lastShot = 999, id = "e", bxm = 0, bulletSprite = MLASER1}
-	fIndex = {base = {70, 5 - Img.INDEX1:getHeight()}, loc = {70, 5 - Img.INDEX1:getHeight()}, sprite = indexSprite, shootmod = 36, bullets = {}, lastShot = 999, id = "r", bxm = 0.4, bulletSprite = ILASER1}
-	fThumb = {base = {91, 51 - Img.THUMB1:getHeight()}, loc = {91, 51 - Img.THUMB1:getHeight()}, sprite = thumbSprite, shootmod = 56, bullets = {}, lastShot = 999, id = " ", bxm = 0.9, bulletSprite = TLASER1}
+	fPinky = {base = {-22, 7 - Img.PINKY1:getHeight()}, loc = {-22, 7 - Img.PINKY1:getHeight()}, sprite = pinkySprite, shootmod = 3, bullets = {}, lastShot = 999, id = "q", bxm = -0.4, bulletSprite = Img.PLASER1}
+	fRing = {base = {2, 5 - Img.RING1:getHeight()}, loc = {2, 5 - Img.RING1:getHeight()}, sprite = ringSprite, shootmod = 10, bullets = {}, lastShot = 999, id = "w", bxm = -0.25, bulletSprite = Img.RLASER1}
+	fMiddle = {base = {46, 2 - Img.MIDDLE1:getHeight()}, loc = {46, 2 - Img.MIDDLE1:getHeight()}, sprite = middleSprite, shootmod = 15, bullets = {}, lastShot = 999, id = "e", bxm = 0, bulletSprite = Img.MLASER1}
+	fIndex = {base = {70, 5 - Img.INDEX1:getHeight()}, loc = {70, 5 - Img.INDEX1:getHeight()}, sprite = indexSprite, shootmod = 36, bullets = {}, lastShot = 999, id = "r", bxm = 0.4, bulletSprite = Img.ILASER1}
+	fThumb = {base = {91, 51 - Img.THUMB1:getHeight()}, loc = {91, 51 - Img.THUMB1:getHeight()}, sprite = thumbSprite, shootmod = 56, bullets = {}, lastShot = 999, id = " ", bxm = 0.9, bulletSprite = Img.TLASER1}
 
 	allFingers = {fPinky, fRing, fMiddle, fIndex, fThumb}
 
@@ -54,7 +54,7 @@ function level1:enter(previous, ...)
 	terrain = {grass = {}, palms = {}, turrets = {}}
 
 	for i = -2,8 do
-		table.insert(terrain.grass, {x = 0, y = i * 124})
+		table.insert(terrain.grass, {x = 0, y = i * 120})
 	end
 end
 
@@ -97,14 +97,14 @@ function level1:update(dt)
 				table.remove(v1, key)
 			end
 
-			for key2, clipper in pairs(clippers) do
-				if bullet.x => clipper.x and bullet.x + bullet.sprite:getWidth() <= clipper.x + Img.CLIPPER1:getWidth() and bullet.y >= clipper.y and bullet.y + bullet.sprite:getWidht() <= clipper.y + Img.CLIPPER1:getHeight() then
-					-- TODO: sound
-					table.remove(v1.bullets, bullet)
-					table.remove(clippers, clipper)
-					end
-				end
-			end
+			--for key2, clipper in pairs(clippers) do
+			--	if bullet.x => clipper.x and bullet.x + bullet.sprite:getWidth() <= clipper.x + Img.CLIPPER1:getWidth() and bullet.y >= clipper.y and bullet.y + bullet.sprite:getWidht() <= clipper.y + Img.CLIPPER1:getHeight() then
+			--		-- TODO: sound
+			--		table.remove(v1.bullets, bullet)
+			--		table.remove(clippers, clipper)
+			--		end
+			--	end
+			--end
 		end
 
 		if v1.lastShot >= 0.3 then
@@ -170,7 +170,7 @@ function level1:update(dt)
 	-- Mob movements:
 
 	for k,v in pairs(clippers) do
-		v.y = v.y + (88 * dt)
+		v.y = v.y + (140 * dt)
 		if v.y + 70 >= love.graphics.getHeight() then
 			table.remove(clippers, k)
 		end
@@ -215,12 +215,13 @@ function level1:update(dt)
 		end
 	end
 
+	printing = ""
 	-- Terrain mutations:
 	for k,v in pairs(terrain.grass) do
-		v.y = v.y + (2 * dt)
+		v.y = v.y + (120 * dt)
+		--printing = printing..tostring(v.y).."\n"
 		if v.y > love.graphics.getHeight() then
-			table.remove(terrain.grass, k)
-			table.insert(terrain.grass, {x = 0, y = 2 * -1 * Img.grass:getHeight()})
+			v.y = 2 * -1 * Img.grass:getHeight()
 		end
 	end
 
@@ -232,7 +233,7 @@ end
 
 function level1:draw()
 	for k,v in pairs(terrain.grass) do
-		love.graphics.draw(Img.grass, 0, v.y)
+		love.graphics.draw(Img.grass, v.x, v.y)
 	end
 
 	love.graphics.print("FPS:"..tostring(love.timer.getFPS()))
@@ -244,7 +245,7 @@ function level1:draw()
 		love.graphics.draw(v.sprite, manus.x + v.loc[1], manus.y + v.loc[2]) -- Draw the fingers
 
 		for key, bullet in pairs(v.bullets) do
-			love.graphics.circle("fill", bullet.x, bullet.y, 5, 30) -- Draw the bullet placeholders
+			love.graphics.draw(bullet.sprite, bullet.x, bullet.y) -- Draw the player bullets
 		end
 	end
 
