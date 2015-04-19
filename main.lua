@@ -31,7 +31,7 @@ local function die(v1, bullet, enemy, second, type, addScore)
 	if bullet.x > enemy.x and bullet.x + bullet.sprite:getWidth() <= enemy.x + enemy.sprite:getWidth() and bullet.y >= enemy.y and bullet.y + bullet.sprite:getWidth() <= enemy.y + (enemy.sprite:getHeight() / 2) then
 		-- TODO: sound
 
-		newSplode = {tim = 0.3, x = bullet.x, y = bullet.y}
+		newSplode = {tim = 0.3, x = bullet.x - (enemy.sprite:getWidth() / 3), y = bullet.y - (enemy.sprite:getHeight() / 3)}
 		table.insert(splodes, newSplode)
 
 		table.remove(v1, key)
@@ -42,12 +42,15 @@ local function die(v1, bullet, enemy, second, type, addScore)
 end
 
 local function loselive(baddie)
-	if baddie.x > manus.x and baddie.x + baddie.sprite:getWidth() <= manus.x + manus.sprite:getWidth() and baddie.y >= manus.y and baddie.y + baddie.sprite:getWidth() <= manus.y + (manus.sprite:getHeight() / 2) then
+	if baddie.x > manus.x and baddie.x <= manus.x + manus.sprite:getWidth() and baddie.y >= manus.y and baddie.y <= manus.y + (manus.sprite:getHeight() / 2) then
 
-		newSplode = {tim = 0.3, x = baddie.x + 30, y = baddie.y + 30}
+		newSplode = {tim = 0.3, x = baddie.x + (baddie.sprite:getWidth() / 2), y = baddie.y + (baddie.sprite:getHeight() / 2)}
 		table.insert(splodes, newSplode)
 
 		lives = lives - 1
+
+		manus.invul = true
+		manus.invultim = 4
 	end
 end
 
@@ -134,17 +137,23 @@ function level1:update(dt)
 
 			for key2, enemy in pairs(clippers) do
 				die(v1.bullets, bullet, enemy, key2, clippers, 100)
-				loselive(enemy)
+				if manus.invul == false then
+					loselive(enemy)
+				end
 			end
 
 			for key2, enemy in pairs(files) do
 				die(v1.bullets, bullet, enemy, key2, files, 300)
-				loselive(enemy)
+				if manus.invul == false then
+					loselive(enemy)
+				end
 			end
 
 			for key2, enemy in pairs(scissors) do
 				die(v1.bullets, bullet, enemy, key2, scissors, 200)
-				loselive(enemy)
+				if manus.invul == false then
+					loselive(enemy)
+				end
 			end
 		end
 
@@ -311,6 +320,15 @@ function level1:update(dt)
 	if controlCooldown > 0 then
 		controlCooldown = controlCooldown - dt
 	end
+
+	if manus.invul == true then
+		manus.invultim = manus.invultim - dt
+	end
+
+	if manus.invultim <= 0 then
+		manus.invul = false
+	end
+
 	waveTimer = waveTimer + dt
 
 end
@@ -321,25 +339,44 @@ function level1:draw()
 	end
 
 	if debugmode == true then
-		love.graphics.print("\n\n\n\n".."FPS:"..tostring(love.timer.getFPS()))
-		love.graphics.print("\n"..printing.."\n"..waveTimer.."\n"..newWave)
+		love.graphics.print("\n\n".."FPS:"..tostring(love.timer.getFPS()).."\n"..printing.."\n"..waveTimer.."\n"..newWave.."\n"..tostring(manus.invul))
 	end
 
 	love.graphics.print("Score: "..score.."\n".."Lives: "..lives)
 
-	love.graphics.draw(manus.sprite, manus.x, manus.y) -- Draw Manus
+	if manus.invul == false then
+		love.graphics.draw(manus.sprite, manus.x, manus.y) -- Draw Manus
 
-	for k,v in pairs(allFingers) do
-		if v.useSprite == "default" then
-			love.graphics.draw(v.sprite, manus.x + v.loc[1], manus.y + v.loc[2]) -- Draw the fingers
-		elseif v.useSprite == "fire" then
-			love.graphics.draw(v.fSprite, manus.x + v.loc[1], manus.y + v.loc[2]) -- Draw the fingers
+		for k,v in pairs(allFingers) do
+			if v.useSprite == "default" then
+				love.graphics.draw(v.sprite, manus.x + v.loc[1], manus.y + v.loc[2]) -- Draw the fingers
+			elseif v.useSprite == "fire" then
+				love.graphics.draw(v.fSprite, manus.x + v.loc[1], manus.y + v.loc[2]) -- Draw the fingers
+			end
+
+			for key, bullet in pairs(v.bullets) do
+				love.graphics.draw(bullet.sprite, bullet.x, bullet.y) -- Draw the player bullets
+			end
 		end
+	elseif manus.invul == true then
+		if manus.invultim % 1.1 <= 0.9 then
+			love.graphics.draw(manus.sprite, manus.x, manus.y) -- Draw Manus
 
-		for key, bullet in pairs(v.bullets) do
-			love.graphics.draw(bullet.sprite, bullet.x, bullet.y) -- Draw the player bullets
+			for k,v in pairs(allFingers) do
+				if v.useSprite == "default" then
+					love.graphics.draw(v.sprite, manus.x + v.loc[1], manus.y + v.loc[2]) -- Draw the fingers
+				elseif v.useSprite == "fire" then
+					love.graphics.draw(v.fSprite, manus.x + v.loc[1], manus.y + v.loc[2]) -- Draw the fingers
+				end
+
+				for key, bullet in pairs(v.bullets) do
+					love.graphics.draw(bullet.sprite, bullet.x, bullet.y) -- Draw the player bullets
+				end
+			end
 		end
 	end
+
+
 
 	for k, v in pairs(clippers) do
 		love.graphics.draw(v.sprite, v.x, v.y)
@@ -391,7 +428,7 @@ function love.load()
 	debugmode = false
 	love.graphics.setFont(love.graphics.newFont("font/Ubuntu-R.ttf", 30))
 	manusStart = Img.IDLE1
-	manus = {state = "default", x = 300, y = 600, sprite = manusStart }
+	manus = {state = "default", x = 300, y = 600, sprite = manusStart, invul = false, invultim = 0}
 	speed = 220
 
 	-- Splash screen:
