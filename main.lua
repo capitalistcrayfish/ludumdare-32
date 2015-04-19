@@ -25,6 +25,16 @@ Img = Proxy( function(k) return love.graphics.newImage("img/"..k..".png") end) -
 Sound = Proxy(function(k) return love.sound.newSoundData("sound/"..k..".ogg") end)
 Music = Proxy(function(k) return k, "stream" end)
 
+local function die(v1, bullet, enemy, type, addScore)
+	if bullet.x > enemy.x and bullet.x + bullet.sprite:getWidth() <= enemy.x + Img.enemy1:getWidth() and bullet.y >= enemy.y and bullet.y + bullet.sprite:getWidth() <= enemy.y + Img.CLIPPER1:getHeight() then
+		-- TODO: sound
+		table.remove(v1.bullets, key)
+		table.remove(type, key2)
+
+		score = score + addScore
+	end
+end
+
 function level1:init()
 	waveTimerMax = 200
 
@@ -53,9 +63,13 @@ function level1:enter(previous, ...)
 
 	terrain = {grass = {}, palms = {}, turrets = {}}
 
-	for i = -2,8 do
-		table.insert(terrain.grass, {x = 0, y = i * 120})
+	for i = -2,12 do
+		table.insert(terrain.grass, {x = 0, y = i * 100})
 	end
+
+	splodes = {} -- Format:   splodes = { {tim = 0.5, x = 1, y = 1} }
+
+	score = 0
 end
 
 function level1:update(dt)
@@ -97,14 +111,31 @@ function level1:update(dt)
 				table.remove(v1, key)
 			end
 
-			--for key2, clipper in pairs(clippers) do
-			--	if bullet.x => clipper.x and bullet.x + bullet.sprite:getWidth() <= clipper.x + Img.CLIPPER1:getWidth() and bullet.y >= clipper.y and bullet.y + bullet.sprite:getWidht() <= clipper.y + Img.CLIPPER1:getHeight() then
-			--		-- TODO: sound
-			--		table.remove(v1.bullets, bullet)
-			--		table.remove(clippers, clipper)
-			--		end
-			--	end
-			--end
+			for key2, enemy in pairs(clippers) do
+				die(v1, bullet, enemy, clippers, 100)
+			end
+
+			for key2, enemy in pairs(files) do
+				--if bullet.x => enemy.x and bullet.x + bullet.sprite:getWidth() <= enemy.x + Img.enemy1:getWidth() and bullet.y >= enemy.y and bullet.y + bullet.sprite:getWidht() <= enemy.y + Img.enemy1:getHeight() then
+				if bullet.x > enemy.x and bullet.x + bullet.sprite:getWidth() <= enemy.x + Img.enemy1:getWidth() and bullet.y >= enemy.y and bullet.y + bullet.sprite:getWidth() <= enemy.y + Img.CLIPPER1:getHeight() then
+					-- TODO: sound
+					table.remove(v1.bullets, key)
+					table.remove(files, key2)
+
+					score = score + 300
+				end
+			end
+
+			for key2, enemy in pairs(scissors) do
+				--if bullet.x => enemy.x and bullet.x + bullet.sprite:getWidth() <= enemy.x + Img.enemy1:getWidth() and bullet.y >= enemy.y and bullet.y + bullet.sprite:getWidht() <= enemy.y + Img.enemy1:getHeight() then
+				if bullet.x > enemy.x and bullet.x + bullet.sprite:getWidth() <= enemy.x + Img.enemy1:getWidth() and bullet.y >= enemy.y and bullet.y + bullet.sprite:getWidth() <= enemy.y + Img.CLIPPER1:getHeight() then
+					-- TODO: sound
+					table.remove(v1.bullets, key)
+					table.remove(scissors, key2)
+
+					score = score + 300
+				end
+			end
 		end
 
 		if v1.lastShot >= 0.3 then
@@ -137,33 +168,16 @@ function level1:update(dt)
 
 	if waveTimer >= newWave then
 		math.randomseed(os.time())
-		for n = 0, 8 do
-			waveType = waveTypes[math.random(1,3)]
-		end
+		waveType = (waveTypes[math.random(1,#waveTypes)])
 
-		if waveType == "simple" then
-			for n = 0, 10 do
-				newClipper = {sprite = Img.CLIPPER1, x = 10 + (n * 80), y = 10}
-				table.insert(clippers, newClipper)
-			end
-		elseif waveType == "double" then
-			for n = 0, 10 do
-				newClipper = {sprite = Img.CLIPPER1, x = 10 + (n * 80), y = 10}
-				table.insert(clippers, newClipper)
-			end
-			for n = 0, 10 do
-				newClipper = {sprite = Img.CLIPPER1, x = 10 + (n * 80), y = -90}
-				table.insert(clippers, newClipper)
-			end
-		elseif waveType == "triangle" then
-			for n = 0, 7 do
-				for n2 = 0,2 do
-					newClipper = {sprite = Img.CLIPPER1, x = 10 + (20 * n) - (20 * n2), y = 10 + (80 * n)}
-				end
-			end
+		if waveType == "single" then
+			for i = 0,10
+			table.insert(clippers, {x = i * 30, y = -10})
 		else
-
+			for i = 0,10
+			table.insert(clippers, {x = i * 30, y = -10})
 		end
+
 		waveTimer = 0
 	end
 
@@ -215,7 +229,18 @@ function level1:update(dt)
 		end
 	end
 
-	printing = ""
+	for k,v in pairs(scissors) do
+		v.y = v.y + (120 * dt)
+		if v.x < manus.x + manus.sprite:getWidth() / 2 then
+			v.x = v.x + (20 * dt)
+		else
+			v.x = v.x - (20 * dt)
+		end
+		if v.y + v.sprite:getHeight() > love.graphics.getHeight() then
+			table.remove(scissors, k)
+		end
+	end
+
 	-- Terrain mutations:
 	for k,v in pairs(terrain.grass) do
 		v.y = v.y + (120 * dt)
