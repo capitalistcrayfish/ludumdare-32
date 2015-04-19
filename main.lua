@@ -52,7 +52,7 @@ local function loselive(baddie)
 		lives = lives - 1
 
 		manus.invul = true
-		manus.invultim = 4
+		manus.invultim = 2
 	end
 end
 
@@ -146,25 +146,17 @@ function level1:update(dt)
 				table.remove(v1, key)
 			end
 
-			for key2, enemy in pairs(clippers) do
+			for key2, enemy in pairs(clippers, files, scissors) do
 				die(v1.bullets, bullet, enemy, key2, clippers, 100)
 				if manus.invul == false then
 					loselive(enemy)
 				end
 			end
+		end
 
-			for key2, enemy in pairs(files) do
-				die(v1.bullets, bullet, enemy, key2, files, 300)
-				if manus.invul == false then
-					loselive(enemy)
-				end
-			end
-
-			for key2, enemy in pairs(scissors) do
-				die(v1.bullets, bullet, enemy, key2, scissors, 200)
-				if manus.invul == false then
-					loselive(enemy)
-				end
+		for key2, enemy in pairs(clippers, files, scissors) do
+			if manus.invul == false then
+				loselive(enemy)
 			end
 		end
 
@@ -205,15 +197,15 @@ function level1:update(dt)
 	end
 
 	-- Animations:
-	if counter % 2.5 <= 0.8 then
-		if manus.sprite == Img.IDLE1 then
-			manus.sprite = Img.IDLE2
-		elseif manus.sprite == Img.IDLE2 then
-			manus.sprite = Img.IDLE3
-		else
-			manus.sprite = Img.IDLE1
-		end
+	--if counter % 2.5 <= 0.8 then
+	if manus.sprite == Img.IDLE1 then
+		manus.sprite = Img.IDLE2
+	elseif manus.sprite == Img.IDLE2 then
+		manus.sprite = Img.IDLE3
+	else
+		manus.sprite = Img.IDLE1
 	end
+	--end
 
 
 	-- Spawn waves:
@@ -256,7 +248,7 @@ function level1:update(dt)
 	-- Mob movements:
 
 	for k,v in pairs(clippers) do
-		v.y = v.y + (200 * dt)
+		v.y = v.y + (260 * dt)
 		if v.y + Img.CLIPPER1:getHeight() > love.graphics.getHeight() then
 			table.remove(clippers, k)
 		end
@@ -373,7 +365,8 @@ function level1:update(dt)
 	end
 
 	waveTimer = waveTimer + dt
-	counter = counter + (1 / love.timer.getFPS())
+	counter = dt
+	manus.invulAnimTim = manus.invulAnimTim + dt
 
 end
 
@@ -391,7 +384,7 @@ function level1:draw()
 	end
 
 	if debugmode == true then
-		love.graphics.print("\n\n".."FPS:"..tostring(love.timer.getFPS()).."\n"..printing.."\n"..waveTimer.."\n"..newWave.."\n"..tostring(manus.invul))
+		love.graphics.print("\n\n".."FPS:"..tostring(love.timer.getFPS()).."\n"..printing.."\n"..waveTimer.."\n"..newWave.."\n"..tostring(manus.invul).."\n"..manus.state)
 	end
 
 	love.graphics.print("Score: "..score.."\n".."Lives: "..lives)
@@ -410,8 +403,11 @@ function level1:draw()
 				love.graphics.draw(bullet.sprite, bullet.x, bullet.y) -- Draw the player bullets
 			end
 		end
+		if manus.invulAnimTim >= 0.2 then
+			manus.invulAnimTim = 0
+		end
 	elseif manus.invul == true then
-		if manus.invultim % 1.1 <= 1.2  then
+		if manus.invulAnimTim >= 0.05 then
 			love.graphics.draw(manus.sprite, manus.x, manus.y) -- Draw Manus
 
 			for k,v in pairs(allFingers) do
@@ -425,6 +421,7 @@ function level1:draw()
 					love.graphics.draw(bullet.sprite, bullet.x, bullet.y) -- Draw the player bullets
 				end
 			end
+			manus.invulAnimTim = 0
 		end
 	end
 
@@ -458,10 +455,17 @@ function gameover:enter(previous, ...)
 	Sound.loop:stop()
 end
 
+function gameover:keyreleased(key, code)
+	if key == "return" or " " then
+		Gamestate.switch(menu) -- Go to menu
+	end
+end
+
 function gameover:draw()
 	love.graphics.draw(Img.gameover, 0, 0)
 	love.graphics.setFont(justice)
-	love.graphics.print("Good job, ur ded\nScore: "..score)
+	love.graphics.print("Score: "..score)
+	love.graphics.printf("PRESS ENTER", 0, 355, 900, "center")
 	love.graphics.setFont(ubuntu)
 end
 
@@ -477,7 +481,7 @@ end
 
 function menu:draw()
 	love.graphics.draw(Img.title, 0, 0)
-	love.graphics.setFont(justice)
+	love.graphics.setFont(bigJustice)
 	love.graphics.printf("PRESS ENTER", 0, 450, 900, "center")
 	love.graphics.setFont(ubuntu)
 end
@@ -487,9 +491,10 @@ function love.load()
 	debugmode = false
 	ubuntu = love.graphics.newFont("font/Ubuntu-R.ttf", 30)
 	justice = love.graphics.newFont("font/justice.ttf", 30)
+	bigJustice = love.graphics.newFont("font/justice.ttf", 47)
 	love.graphics.setFont(ubuntu)
 	manusStart = Img.IDLE1
-	manus = {state = "default", x = 300, y = 600, sprite = manusStart, invul = false, invultim = 0}
+	manus = {state = "default", x = 300, y = 600, sprite = manusStart, invul = false, invultim = 0, invulAnimTim = 0}
 	speed = 220
 
 	-- Splash screen:
