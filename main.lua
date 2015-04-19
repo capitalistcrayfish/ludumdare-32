@@ -49,7 +49,7 @@ function level1:enter(previous, ...)
 
 	allFingers = {fPinky, fRing, fMiddle, fIndex, fThumb}
 
-	newWave = 100
+	newWave = 10
 end
 
 function level1:update(dt)
@@ -120,9 +120,10 @@ function level1:update(dt)
 
 	if waveTimer >= newWave then
 		math.randomseed(os.time())
-		for n = 0, 5 do
+		for n = 0, 8 do
 			waveType = waveTypes[math.random(1,3)]
 		end
+		--printing = waveType
 
 		if waveType == "simple" then
 			for n = 0, 10 do
@@ -135,17 +136,17 @@ function level1:update(dt)
 				table.insert(clippers, newClipper)
 			end
 			for n = 0, 10 do
-				newClipper = {sprite = Img.CLIPPER1, x = 10 + (n * 80), y = -60}
+				newClipper = {sprite = Img.CLIPPER1, x = 10 + (n * 80), y = -90}
 				table.insert(clippers, newClipper)
 			end
 		elseif waveType == "triangle" then
 			for n = 0, 7 do
 				for n2 = 0,2 do
-					newClipper = {sprite = Img.CLIPPER1, x = 10 + (20 * n) - (20 * n2), y = 10 + (60 * n)}
+					newClipper = {sprite = Img.CLIPPER1, x = 10 + (20 * n) - (20 * n2), y = 10 + (80 * n)}
 				end
 			end
 		else
-			printing = "no wave?"
+
 		end
 		waveTimer = 0
 	end
@@ -165,7 +166,8 @@ end
 
 function level1:draw()
 
-	 love.graphics.print(printing)
+	love.graphics.print("FPS:"..tostring(love.timer.getFPS()))
+	 love.graphics.print("\n"..printing.."\n"..waveTimer.."\n"..newWave)
 
 	love.graphics.draw(manus.sprite, manus.x, manus.y) -- Draw Manus
 
