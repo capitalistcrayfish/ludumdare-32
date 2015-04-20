@@ -68,16 +68,17 @@ function level1:enter(previous, ...)
 	love.audio.stop()
 
 	files, clippers, scissors = {}, {}, {} -- Arrays of enemies
+	floatRings = {} -- Rings currently not picked up
 
 	controlCooldown = 0.3
 	waveTimer = 60
 	counter = 0
 
-	fPinky = {base = {-22, 7 - Img.PINKY1:getHeight()}, loc = {-22, 7 - Img.PINKY1:getHeight()}, sprite = pinkySprite, shootmod = 3, bullets = {}, lastShot = 999, id = "q", bxm = -0.4, bulletSprite = Img.PLASER1, useSprite = "default", fSprite = Img.PINKY2}
-	fRing = {base = {2, 5 - Img.RING1:getHeight()}, loc = {2, 5 - Img.RING1:getHeight()}, sprite = ringSprite, shootmod = 10, bullets = {}, lastShot = 999, id = "w", bxm = -0.25, bulletSprite = Img.RLASER1, useSprite = "default", fSprite = Img.RING2}
-	fMiddle = {base = {46, 2 - Img.MIDDLE1:getHeight()}, loc = {46, 2 - Img.MIDDLE1:getHeight()}, sprite = middleSprite, shootmod = 15, bullets = {}, lastShot = 999, id = "e", bxm = 0, bulletSprite = Img.MLASER1, useSprite = "default", fSprite = Img.MIDDLE2}
-	fIndex = {base = {70, 5 - Img.INDEX1:getHeight()}, loc = {70, 5 - Img.INDEX1:getHeight()}, sprite = indexSprite, shootmod = 36, bullets = {}, lastShot = 999, id = "r", bxm = 0.4, bulletSprite = Img.ILASER1, useSprite = "default", fSprite = Img.INDEX2}
-	fThumb = {base = {91, 51 - Img.THUMB1:getHeight()}, loc = {91, 51 - Img.THUMB1:getHeight()}, sprite = thumbSprite, shootmod = 56, bullets = {}, lastShot = 999, id = " ", bxm = 0.9, bulletSprite = Img.TLASER1, useSprite = "default", fSprite = Img.THUMB2}
+	fPinky = {base = {-22, 7 - Img.PINKY1:getHeight()}, loc = {-22, 7 - Img.PINKY1:getHeight()}, sprite = pinkySprite, shootmod = 3, bullets = {}, lastShot = 999, id = "q", bxm = -0.4, bulletSprite = Img.PLASER1, useSprite = "default", fSprite = Img.PINKY2, ringed = false, spriteR = Img.RPINKY1, fSpriteR = Img.RPINKY2}
+	fRing = {base = {2, 5 - Img.RING1:getHeight()}, loc = {2, 5 - Img.RING1:getHeight()}, sprite = ringSprite, shootmod = 10, bullets = {}, lastShot = 999, id = "w", bxm = -0.25, bulletSprite = Img.RLASER1, useSprite = "default", fSprite = Img.RING2, ringed = false, spriteR = Img.RRING1, fSpriteR = Img.RRING2}
+	fMiddle = {base = {46, 2 - Img.MIDDLE1:getHeight()}, loc = {46, 2 - Img.MIDDLE1:getHeight()}, sprite = middleSprite, shootmod = 15, bullets = {}, lastShot = 999, id = "e", bxm = 0, bulletSprite = Img.MLASER1, useSprite = "default", fSprite = Img.MIDDLE2, ringed = false, spriteR = Img.RMIDDLE1, fSpriteR = Img.RMIDDLE2}
+	fIndex = {base = {70, 5 - Img.INDEX1:getHeight()}, loc = {70, 5 - Img.INDEX1:getHeight()}, sprite = indexSprite, shootmod = 36, bullets = {}, lastShot = 999, id = "r", bxm = 0.4, bulletSprite = Img.ILASER1, useSprite = "default", fSprite = Img.INDEX2, ringed = false, spriteR = Img.RINDEX1, fSpriteR = Img.RINDEX2}
+	fThumb = {base = {91, 51 - Img.THUMB1:getHeight()}, loc = {91, 51 - Img.THUMB1:getHeight()}, sprite = thumbSprite, shootmod = 56, bullets = {}, lastShot = 999, id = " ", bxm = 0.9, bulletSprite = Img.TLASER1, useSprite = "default", fSprite = Img.THUMB2, ringed = false, spriteR = Img.RTHUMB1, fSpriteR = Img.RTHUMB2}
 
 	allFingers = {fPinky, fRing, fMiddle, fIndex, fThumb}
 
@@ -146,8 +147,22 @@ function level1:update(dt)
 				table.remove(v1, key)
 			end
 
-			for key2, enemy in pairs(clippers, files, scissors) do
+			for key2, enemy in pairs(clippers) do
 				die(v1.bullets, bullet, enemy, key2, clippers, 100)
+				if manus.invul == false then
+					loselive(enemy)
+				end
+			end
+
+			for key2, enemy in pairs(files) do
+				die(v1.bullets, bullet, enemy, key2, files, 300)
+				if manus.invul == false then
+					loselive(enemy)
+				end
+			end
+
+			for key2, enemy in pairs(scissors) do
+				die(v1.bullets, bullet, enemy, key2, scissors, 200)
 				if manus.invul == false then
 					loselive(enemy)
 				end
@@ -184,6 +199,20 @@ function level1:update(dt)
 			end
 		end
 
+		if manus.state ~= "stomp" then
+			for k4,v4 in pairs(floatRings) do
+				if v4.x < v1.loc[1] + v1.sprite:getWidth() + manus.x and
+					v1.loc[1] + manus.x < v4.x + v4.sprite:getWidth() and
+					v4.y < v1.loc[2] + v1.sprite:getHeight() + manus.y and
+					v1.loc[2] + manus.y < v4.y + v4.sprite:getHeight() then
+
+					v1.ringed = true
+					table.remove(floatRings, k4)
+
+				end
+			end
+		end
+
 		v1.lastShot = v1.lastShot + dt
 	end
 
@@ -207,11 +236,19 @@ function level1:update(dt)
 	end
 	--end
 
+	if counter >= 15 then
+		newWave = newWave * 0.98
+		counter = 0
+	end
 
 	-- Spawn waves:
 	if waveTimer >= newWave then
 		math.randomseed(os.time())
 		waveType = (waveTypes[math.random(1,#waveTypes)])
+		if math.random(1,20) == 1 then
+			newRing = {x = math.random() * math.random() * 900, y = -1.5 * Img.RING:getHeight(), sprite = Img.RING}
+			table.insert(floatRings, newRing)
+		end
 
 		printing = waveType
 
@@ -227,7 +264,7 @@ function level1:update(dt)
 				table.insert(clippers, newClipper)
 			end
 			for i = 0,10 do
-				newClipper = {x = 10 + (i * 80), y = -120, sprite = Img.CLIPPER1}
+				newClipper = {x = 10 + (i * 80), y = -150, sprite = Img.CLIPPER1}
 				table.insert(clippers, newClipper)
 			end
 		elseif waveType == "scissors" then
@@ -238,7 +275,7 @@ function level1:update(dt)
 				end
 			end
 		elseif waveType == "file" then
-			newFile = {x = 450 - (Img.FILE1:getWidth() / 2), start = 450 - (Img.FILE1:getWidth() / 2), y = 0, sprite = FILE1, tim = 0.5, sprite = Img.FILE1, dir = "right"}
+			newFile = {x = 450 - (Img.FILE1:getWidth() / 2), start = 450 - (Img.FILE1:getWidth() / 2), y = -1 * Img.FILE1:getHeight(), sprite = FILE1, tim = 0.5, sprite = Img.FILE1, dir = "right"}
 			table.insert(files, newFile)
 		end
 
@@ -249,7 +286,7 @@ function level1:update(dt)
 
 	for k,v in pairs(clippers) do
 		v.y = v.y + (260 * dt)
-		if v.y + Img.CLIPPER1:getHeight() > love.graphics.getHeight() then
+		if v.y > love.graphics.getHeight() + Img.CLIPPER1:getHeight() then
 			table.remove(clippers, k)
 		end
 	end
@@ -294,6 +331,10 @@ function level1:update(dt)
 				v.tim = v.tim - dt
 			end
 		end
+
+		if v.y > love.graphics.getHeight() + v.sprite:getHeight() then
+			table.remove(files, k)
+		end
 	end
 
 	for k,v in pairs(scissors) do
@@ -304,7 +345,7 @@ function level1:update(dt)
 			v.x = v.x - (20 * dt)
 		end
 
-		if v.y > love.graphics.getHeight() then
+		if v.y > love.graphics.getHeight() + v.sprite:getHeight() then
 			table.remove(scissors, k)
 		end
 		v.lastAnim = v.lastAnim + dt
@@ -332,6 +373,10 @@ function level1:update(dt)
 		if v.tim <= 0 then
 			table.remove(splodes, k)
 		end
+	end
+
+	for k,v in pairs(floatRings) do
+		v.y = v.y + (125 * dt)
 	end
 
 	-- Terrain mutations:
@@ -365,8 +410,13 @@ function level1:update(dt)
 	end
 
 	waveTimer = waveTimer + dt
-	counter = dt
+	counter = counter + dt
 	manus.invulAnimTim = manus.invulAnimTim + dt
+
+	-- Give time bonus:
+	if manus.invulAnimTim >= 0.2 then
+		score = score + 1
+	end
 
 end
 
@@ -393,9 +443,13 @@ function level1:draw()
 		love.graphics.draw(manus.sprite, manus.x, manus.y) -- Draw Manus
 
 		for k,v in pairs(allFingers) do
-			if v.useSprite == "default" then
+			if v.useSprite == "default" and v.ringed then
+				love.graphics.draw(v.spriteR, manus.x + v.loc[1], manus.y + v.loc[2]) -- Draw the fingers
+			elseif v.useSprite == "fire" and v.ringed then
+				love.graphics.draw(v.fSpriteR, manus.x + v.loc[1], manus.y + v.loc[2]) -- Draw the fingers
+			elseif v.useSprite == "default" then
 				love.graphics.draw(v.sprite, manus.x + v.loc[1], manus.y + v.loc[2]) -- Draw the fingers
-			elseif v.useSprite == "fire" then
+			else
 				love.graphics.draw(v.fSprite, manus.x + v.loc[1], manus.y + v.loc[2]) -- Draw the fingers
 			end
 
@@ -425,7 +479,9 @@ function level1:draw()
 		end
 	end
 
-
+	for k,v in pairs(floatRings) do
+		love.graphics.draw(v.sprite, v.x, v.y)
+	end
 
 	for k, v in pairs(clippers) do
 		love.graphics.draw(v.sprite, v.x, v.y)
