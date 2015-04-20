@@ -9,8 +9,9 @@ local Gamestate = require "libs/HUMP/gamestate" -- Import Gamestate module
 
 local splash = {}
 local menu = {} -- Define gamestates
-local cutscene = {}
+local cutscene1 = {}
 local level1 = {}
+local cutscene2 = {}
 local gameover = {}
 
 printing = ""
@@ -24,16 +25,19 @@ local function Proxy(f) -- Proxy function for sprites and audio
 end
 
 Img = Proxy( function(k) return love.graphics.newImage("img/"..k..".png") end) -- Proxy images and sound
+Frames = Proxy( function(k) return love.graphics.newImage("img/cutscenes/"..k..".png") end)
 Sound = Proxy(function(k) return love.audio.newSource(love.sound.newSoundData("sound/"..k..".ogg")) end)
 
 local function die(v1, bullet, enemy, second, type, addScore)
 	if bullet.x > enemy.x and bullet.x + bullet.sprite:getWidth() <= enemy.x + enemy.sprite:getWidth() and bullet.y >= enemy.y and bullet.y + bullet.sprite:getWidth() <= enemy.y + (enemy.sprite:getHeight() / 2) then
-		-- TODO: sound
+		love.audio.play(Sound.explosion)
 
 		newSplode = {tim = 0.3, x = bullet.x - (enemy.sprite:getWidth() / 3), y = bullet.y - (enemy.sprite:getHeight() / 3)}
 		table.insert(splodes, newSplode)
 
-		table.remove(v1, key)
+		if bullet.ringed == false then
+			table.remove(v1, key)
+		end
 		table.remove(type, second)
 
 		score = score + addScore
@@ -74,11 +78,11 @@ function level1:enter(previous, ...)
 	waveTimer = 60
 	counter = 0
 
-	fPinky = {base = {-22, 7 - Img.PINKY1:getHeight()}, loc = {-22, 7 - Img.PINKY1:getHeight()}, sprite = pinkySprite, shootmod = 3, bullets = {}, lastShot = 999, id = "q", bxm = -0.4, bulletSprite = Img.PLASER1, useSprite = "default", fSprite = Img.PINKY2, ringed = false, spriteR = Img.RPINKY1, fSpriteR = Img.RPINKY2}
-	fRing = {base = {2, 5 - Img.RING1:getHeight()}, loc = {2, 5 - Img.RING1:getHeight()}, sprite = ringSprite, shootmod = 10, bullets = {}, lastShot = 999, id = "w", bxm = -0.25, bulletSprite = Img.RLASER1, useSprite = "default", fSprite = Img.RING2, ringed = false, spriteR = Img.RRING1, fSpriteR = Img.RRING2}
-	fMiddle = {base = {46, 2 - Img.MIDDLE1:getHeight()}, loc = {46, 2 - Img.MIDDLE1:getHeight()}, sprite = middleSprite, shootmod = 15, bullets = {}, lastShot = 999, id = "e", bxm = 0, bulletSprite = Img.MLASER1, useSprite = "default", fSprite = Img.MIDDLE2, ringed = false, spriteR = Img.RMIDDLE1, fSpriteR = Img.RMIDDLE2}
-	fIndex = {base = {70, 5 - Img.INDEX1:getHeight()}, loc = {70, 5 - Img.INDEX1:getHeight()}, sprite = indexSprite, shootmod = 36, bullets = {}, lastShot = 999, id = "r", bxm = 0.4, bulletSprite = Img.ILASER1, useSprite = "default", fSprite = Img.INDEX2, ringed = false, spriteR = Img.RINDEX1, fSpriteR = Img.RINDEX2}
-	fThumb = {base = {91, 51 - Img.THUMB1:getHeight()}, loc = {91, 51 - Img.THUMB1:getHeight()}, sprite = thumbSprite, shootmod = 56, bullets = {}, lastShot = 999, id = " ", bxm = 0.9, bulletSprite = Img.TLASER1, useSprite = "default", fSprite = Img.THUMB2, ringed = false, spriteR = Img.RTHUMB1, fSpriteR = Img.RTHUMB2}
+	fPinky = {base = {-22, 7 - Img.PINKY1:getHeight()}, loc = {-22, 7 - Img.PINKY1:getHeight()}, sprite = pinkySprite, shootmod = 3, bullets = {}, lastShot = 999, id = "q", bxm = -0.4, bulletSprite = Img.PLASER1, useSprite = "default", fSprite = Img.PINKY2, ringed = false, spriteR = Img.RPINKY1, fSpriteR = Img.RPINKY2, bulletSpriteR = Img.RPLASER1}
+	fRing = {base = {2, 5 - Img.RING1:getHeight()}, loc = {2, 5 - Img.RING1:getHeight()}, sprite = ringSprite, shootmod = 10, bullets = {}, lastShot = 999, id = "w", bxm = -0.25, bulletSprite = Img.RLASER1, useSprite = "default", fSprite = Img.RING2, ringed = false, spriteR = Img.RRING1, fSpriteR = Img.RRING2, bulletSpriteR = Img.RRLASER1}
+	fMiddle = {base = {46, 2 - Img.MIDDLE1:getHeight()}, loc = {46, 2 - Img.MIDDLE1:getHeight()}, sprite = middleSprite, shootmod = 15, bullets = {}, lastShot = 999, id = "e", bxm = 0, bulletSprite = Img.MLASER1, useSprite = "default", fSprite = Img.MIDDLE2, ringed = false, spriteR = Img.RMIDDLE1, fSpriteR = Img.RMIDDLE2, bulletSpriteR = Img.RMLASER1}
+	fIndex = {base = {70, 5 - Img.INDEX1:getHeight()}, loc = {70, 5 - Img.INDEX1:getHeight()}, sprite = indexSprite, shootmod = 36, bullets = {}, lastShot = 999, id = "r", bxm = 0.4, bulletSprite = Img.ILASER1, useSprite = "default", fSprite = Img.INDEX2, ringed = false, spriteR = Img.RINDEX1, fSpriteR = Img.RINDEX2, bulletSpriteR = Img.RILASER1}
+	fThumb = {base = {91, 51 - Img.THUMB1:getHeight()}, loc = {91, 51 - Img.THUMB1:getHeight()}, sprite = thumbSprite, shootmod = 56, bullets = {}, lastShot = 999, id = " ", bxm = 0.9, bulletSprite = Img.TLASER1, useSprite = "default", fSprite = Img.THUMB2, ringed = false, spriteR = Img.RTHUMB1, fSpriteR = Img.RTHUMB2, bulletSpriteR = Img.RTLASER1}
 
 	allFingers = {fPinky, fRing, fMiddle, fIndex, fThumb}
 
@@ -93,9 +97,9 @@ function level1:enter(previous, ...)
 	for i = 1,50 do
 		table.insert(terrain.palms, {x = math.random() * math.random() * 900, y = math.random() * math.random() * 900, broken = false})
 	end
-	
-	for i = 1,8 do
-		table.insert(terrain.lakes, {x = math.random() * math.random() * 900, y = math.random() * math.random() * 900}
+
+	for i = 1,3 do
+		table.insert(terrain.lakes, {x = math.random() * math.random() * 900, y = math.random() * math.random() * 900})
 	end
 
 	splodes = {} -- Format:   splodes = { {tim = 0.5, x = 1, y = 1} }
@@ -110,7 +114,7 @@ function level1:update(dt)
 
 	-- Check if still alive:
 	if lives == 0 then
-		Gamestate.switch(gameover)
+		Gamestate.switch(cutscene2)
 	end
 
 	-- User input:
@@ -187,8 +191,14 @@ function level1:update(dt)
 		if manus.state == "default" then
 			if tempCooldown <= 0 then
 				if love.keyboard.isDown(v1.id) then
-					newbullet = {x = v1.loc[1] + v1.shootmod + manus.x, y = v1.loc[2] + manus.y, xmod = v1.bxm, sprite = v1.bulletSprite} -- Create a new bullet
+					if v1.ringed then
+						newbullet = {x = v1.loc[1] + v1.shootmod + manus.x, y = v1.loc[2] + manus.y, xmod = v1.bxm, sprite = v1.bulletSpriteR, ringed = true} -- Create a new bullet
+					else
+						newbullet = {x = v1.loc[1] + v1.shootmod + manus.x, y = v1.loc[2] + manus.y, xmod = v1.bxm, sprite = v1.bulletSprite, ringed = false} -- Create a new bullet
+					end
 					table.insert(v1.bullets, newbullet) -- Append the bullet to the list of bullets fired from its finger
+
+					love.audio.play(Sound.laser1)
 
 					if controlCooldown <= 0 then
 						controlCooldown = 0.4
@@ -288,9 +298,9 @@ function level1:update(dt)
 			newFile = {x = 450 - (Img.FILE1:getWidth() / 2), start = 450 - (Img.FILE1:getWidth() / 2), y = -1 * Img.FILE1:getHeight(), sprite = FILE1, tim = 0.5, sprite = Img.FILE1, dir = "right"}
 			table.insert(files, newFile)
 		elseif waveType == "sidefiles" then
-			newFile = {x = 900 + Img.FILE1:getWidth(), start = 900 + Img.FILE1:getWidth() - 100, y = 350, sprite = FILE1, tim = 0.5, sprite = Img.FILE1, dir = "right"}
+			newFile = {x = 900 + Img.FILE1:getWidth(), start = 900 + Img.FILE1:getWidth() - 100, y = 150, sprite = FILE1, tim = 0.5, sprite = Img.FILE1, dir = "left"}
 			table.insert(files, newFile)
-			newFile = {x = -1 * Img.FILE1:getWidth() , start = -1 * Img.FILE1:getWidth() + 100, y = 350, sprite = FILE1, tim = 0.5, sprite = Img.FILE1, dir = "right"}
+			newFile = {x = -1 * Img.FILE1:getWidth() , start = -1 * Img.FILE1:getWidth() + 100, y = 150, sprite = FILE1, tim = 0.5, sprite = Img.FILE1, dir = "right"}
 			table.insert(files, newFile)
 		end
 
@@ -407,7 +417,14 @@ function level1:update(dt)
 		if v.y > love.graphics.getHeight() then
 			v.y = 2 * -1 * Img.PALM1:getHeight()
 			v.x = math.random() * math.random() * 900
-			v.broken = false
+		end
+	end
+
+	for k,v in pairs(terrain.lakes) do
+		v.y = v.y + (120 * dt)
+		if v.y > love.graphics.getHeight() then
+			v.y = 2 * -1 * Img.LAKE:getHeight()
+			v.x = math.random() * 900 + 200
 		end
 	end
 
@@ -440,12 +457,12 @@ function level1:draw()
 		love.graphics.draw(Img.grass1, v.x, v.y)
 	end
 
+	for k,v in pairs(terrain.lakes) do
+		love.graphics.draw(Img.LAKE, v.x, v.y)
+	end
+
 	for k,v in pairs(terrain.palms) do
-		if v.broken then
-			love.graphics.draw(Img.PALM2, v.x, v.y)
-		else
-			love.graphics.draw(Img.PALM1, v.x, v.y)
-		end
+		love.graphics.draw(Img.PALM1, v.x, v.y)
 	end
 
 	if debugmode == true then
@@ -524,10 +541,17 @@ end
 function gameover:enter(previous, ...)
 	Sound.loop:setLooping(false)
 	Sound.loop:stop()
+
+	love.audio.play(Sound.game_over)
+
+	if score > tonumber(highScore) then
+		love.filesystem.write("highscore.fin", score)
+		highScore = score
+	end
 end
 
 function gameover:keyreleased(key, code)
-	if key == "return" or " " then
+	if key == "return" then
 		Gamestate.switch(menu) -- Go to menu
 	end
 end
@@ -545,15 +569,19 @@ function menu:enter(previous, ...)
 end
 
 function menu:keyreleased(key, code)
-	if key == "return" or " " then
-		Gamestate.switch(level1) -- Go to level 1
+	if key == "return" then
+		if firstTime == true then
+			Gamestate.switch(cutscene1)
+		else
+			Gamestate.switch(level1) -- Go to level 1
+		end
 	end
 end
 
 function menu:draw()
 	love.graphics.draw(Img.title, 0, 0)
 	love.graphics.setFont(bigJustice)
-	love.graphics.printf("PRESS ENTER", 0, 450, 900, "center")
+	love.graphics.printf("PRESS ENTER\n\n".."HIGHSCORE: "..tostring(highScore), 0, 450, 900, "center")
 	love.graphics.setFont(ubuntu)
 end
 
@@ -575,6 +603,22 @@ function love.load()
 	textObj = { y = -500, target = 260, center = (love.graphics.getWidth() / 2 - 326) }
 	frames = 0
 
+	-- Highscore:
+	if love.filesystem.isFile("highscore.fin") then
+		highScore = love.filesystem.read("highscore.fin")
+	else
+		love.filesystem.newFile("highscore.fin")
+		highScore = 0
+		love.filesystem.write("highscore.fin", highScore)
+	end
+
+	if love.filesystem.isFile("first.fin") then
+		firstTime = false
+	else
+		firstTime = true
+	end
+
+
 	-- Gamestate"
 	Gamestate.registerEvents()
 	Gamestate.switch(splash)
@@ -594,4 +638,54 @@ end
 function splash:draw(dt)
 	love.graphics.draw(crayfish, crayfishObj.center, crayfishObj.y)
 	love.graphics.draw(text, textObj.center, textObj.y)
+end
+
+
+
+function cutscene1:enter(previous, ...)
+	lastStep = 0
+
+	drawFrame = Frames.F01
+	allFrames = {Frames.F01, Frames.F02, Frames.F03, Frames.F04, Frames.F05, Frames.F06, Frames.F07, Frames.F08, Frames.F09, Frames.F10, Frames.F11, Frames.F12, Frames.F13, Frames.F14, Frames.F15, Frames.F16, Frames.F17, Frames.F18, Frames.F19}
+
+	buzz = false
+end
+
+function cutscene1:keyreleased(key, code)
+	if key == "return" then
+		for k, v in allFrames do
+			if drawFrame == Frames.F03 then
+				buzz = true
+				love.audio.play(Sound.ralov)
+			elseif drawFrame == Frames.F11 then
+				buzz = false
+			elseif drawFrame == Frames.F19 then
+				love.filesystem.newFile("first.fin")
+				Gamestate.switch(level1)
+			elseif drawFrame == v then
+				if lastStep >= 0.2 then
+					drawFrame = allFrames[k + 1]
+					lastStep = 0
+				end
+			end
+		end
+	end
+end
+
+function cutscene1:update(dt)
+	lastStep = lastStep + dt
+
+	if buzz == true then
+		if lastStep >= 0.02 then
+			for k,v in allFrames do
+				if drawFrame == v then
+					drawFrame = allFrames[k + 1]
+				end
+			end
+		end
+	end
+end
+
+function cutscene1:draw()
+	love.graphics.draw(drawFrame, 0, 0)
 end
