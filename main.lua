@@ -580,13 +580,19 @@ function menu:keyreleased(key, code)
 		else
 			Gamestate.switch(level1) -- Go to level 1
 		end
+	elseif key == "rctrl" then
+		Gamestate.switch(cutscene1)
 	end
 end
 
 function menu:draw()
 	love.graphics.draw(Img.title, 0, 0)
 	love.graphics.setFont(bigJustice)
-	love.graphics.printf("PRESS ENTER\n\n".."HIGHSCORE: "..tostring(highScore), 0, 450, 900, "center")
+	if firstTime == false then
+		love.graphics.printf("PRESS ENTER\n\n".."HIGHSCORE: "..tostring(highScore).."\n RCTRL FOR INTRO" , 0, 450, 900, "center")
+	else
+		love.graphics.printf("PRESS ENTER\n\n".."HIGHSCORE: "..tostring(highScore), 0, 450, 900, "center")
+	end
 	love.graphics.setFont(justice)
 end
 
@@ -621,10 +627,8 @@ function love.load()
 	else
 		firstTime = true
 		love.filesystem.newFile("first.fin")
+		love.filesystem.write("first.fin", ":^)")
 	end
-
-	-- Forgive me
-	debugprint = ""
 
 	-- Gamestate"
 	Gamestate.registerEvents()
@@ -656,6 +660,8 @@ function cutscene1:enter(previous, ...)
 	allFrames = {Frames.F01, Frames.F02, Frames.F03, Frames.F04, Frames.F05, Frames.F06, Frames.F07, Frames.F08, Frames.F09, Frames.F10, Frames.F11, Frames.F12, Frames.F13, Frames.F14, Frames.F15, Frames.F16, Frames.F17, Frames.F18, Frames.F19}
 
 	buzz = false
+
+	firstTime = false
 end
 
 function cutscene1:update(dt)
@@ -667,48 +673,47 @@ function cutscene1:update(dt)
 		end
 
 	elseif drawFrame == Frames.F04 then
-		if lastStep >= 0.13 then
+		if lastStep >= 0.14 then
 			drawFrame = Frames.F05
 			lastStep = 0
 
 			love.audio.play(Sound.ralov)
 		end
 	elseif drawFrame == Frames.F05 then
-		if lastStep >= 0.13 then
+		if lastStep >= 0.14 then
 			drawFrame = Frames.F06
 			lastStep = 0
 		end
 	elseif drawFrame == Frames.F06 then
-		if lastStep >= 0.13 then
+		if lastStep >= 0.14 then
 			drawFrame = Frames.F07
 			lastStep = 0
 		end
 	elseif drawFrame == Frames.F07 then
-		if lastStep >= 0.13 then
+		if lastStep >= 0.14 then
 			drawFrame = Frames.F08
 			lastStep = 0
 		end
 	elseif drawFrame == Frames.F08 then
-		if lastStep >= 0.13 then
+		if lastStep >= 0.14 then
 			drawFrame = Frames.F09
 			lastStep = 0
 		end
 	elseif drawFrame == Frames.F09 then
-		if lastStep >= 0.13 then
+		if lastStep >= 0.14 then
 			drawFrame = Frames.F10
 			lastStep = 0
 		end
 	elseif drawFrame == Frames.F10 then
-		if lastStep >= 0.13 then
+		if lastStep >= 0.14 then
 			drawFrame = Frames.F11
 			lastStep = 0
 		end
 
 	elseif love.keyboard.isDown("return") and drawFrame ~= F19 then
 		copy = drawFrame
-		debugprint = lastStep
 		for k,v in pairs(allFrames) do
-			if v == copy and lastStep >= 1.6 then
+			if v == copy and lastStep >= 1.2 then
 				drawFrame = allFrames[k + 1]
 				lastStep = 0
 			end
@@ -718,9 +723,7 @@ end
 
 function cutscene1:draw()
 	love.graphics.draw(drawFrame, 0, 0)
-	love.graphics.print("ENT.", 780, 820)
-
-	love.graphics.print("blah: "..debugprint, 0, 0)
+	love.graphics.print("PRESS ENTER", 610, 860)
 end
 
 
@@ -743,7 +746,7 @@ function cutscene2:update(dt)
 				if lastStep >= 3 then
 					Gamestate.switch(menu)
 				end
-			elseif v == copy and lastStep >= 1.6 then
+			elseif v == copy and lastStep >= 1.2 then
 				muhDrawFrame = muhFrames[k + 1]
 				lastStep = 0
 			end
