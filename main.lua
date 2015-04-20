@@ -26,7 +26,8 @@ end
 
 Img = Proxy( function(k) return love.graphics.newImage("img/"..k..".png") end) -- Proxy images and sound
 Frames = Proxy( function(k) return love.graphics.newImage("img/cutscenes/"..k..".png") end)
-Sound = Proxy(function(k) return love.audio.newSource(love.sound.newSoundData("sound/"..k..".ogg")) end)
+Music = Proxy(function(k) return love.audio.newSource(love.sound.newSoundData("sound/"..k..".ogg")) end)
+Sound = Proxy(function(k) return love.audio.newSource(love.sound.newSoundData("sound/"..k..".wav")) end)
 
 local function die(v1, bullet, enemy, second, type, addScore)
 	if bullet.x > enemy.x and bullet.x + bullet.sprite:getWidth() <= enemy.x + enemy.sprite:getWidth() and bullet.y >= enemy.y and bullet.y + bullet.sprite:getWidth() <= enemy.y + (enemy.sprite:getHeight() / 2) then
@@ -49,6 +50,8 @@ local function loselive(baddie)
 		manus.x < baddie.x + baddie.sprite:getWidth() and
 		baddie.y < manus.y + manus.sprite:getHeight() and
 		manus.y < baddie.y + baddie.sprite:getHeight() then
+
+		love.audio.play(Sound.explosion)
 
 		newSplode = {tim = 0.3, x = baddie.x + (baddie.sprite:getWidth() / 2), y = baddie.y + (baddie.sprite:getHeight() / 2)}
 		table.insert(splodes, newSplode)
@@ -106,15 +109,21 @@ function level1:enter(previous, ...)
 
 	score, lives = 0, 3
 
-	Sound.loop:play()
-	Sound.loop:setLooping(true)
+	Music.loop:play()
+	Music.loop:setLooping(true)
 end
 
 function level1:update(dt)
 
 	-- Check if still alive:
 	if lives == 0 then
-		Gamestate.switch(cutscene2)
+		love.audio.stop()
+		love.audio.play(Sound.game_over)
+		if score > tonumber(highScore) then
+			Gamestate.switch(cutscene2)
+		else
+			Gamestate.switch(gameover)
+		end
 	end
 
 	-- User input:
@@ -539,10 +548,8 @@ function level1:draw()
 end
 
 function gameover:enter(previous, ...)
-	Sound.loop:setLooping(false)
-	Sound.loop:stop()
-
-	love.audio.play(Sound.game_over)
+	Music.loop:setLooping(false)
+	Music.loop:stop()
 
 	if score > tonumber(highScore) then
 		love.filesystem.write("highscore.fin", score)
@@ -558,14 +565,12 @@ end
 
 function gameover:draw()
 	love.graphics.draw(Img.gameover, 0, 0)
-	love.graphics.setFont(justice)
 	love.graphics.print("Score: "..score)
 	love.graphics.printf("PRESS ENTER", 0, 355, 900, "center")
-	love.graphics.setFont(ubuntu)
 end
 
 function menu:enter(previous, ...)
-	love.audio.play(Sound.title)
+	love.audio.play(Music.title)
 end
 
 function menu:keyreleased(key, code)
@@ -582,16 +587,15 @@ function menu:draw()
 	love.graphics.draw(Img.title, 0, 0)
 	love.graphics.setFont(bigJustice)
 	love.graphics.printf("PRESS ENTER\n\n".."HIGHSCORE: "..tostring(highScore), 0, 450, 900, "center")
-	love.graphics.setFont(ubuntu)
+	love.graphics.setFont(justice)
 end
 
 function love.load()
 	-- General stuff:
 	debugmode = false
-	ubuntu = love.graphics.newFont("font/Ubuntu-R.ttf", 30)
 	justice = love.graphics.newFont("font/justice.ttf", 30)
 	bigJustice = love.graphics.newFont("font/justice.ttf", 47)
-	love.graphics.setFont(ubuntu)
+	love.graphics.setFont(justice)
 	manusStart = Img.IDLE1
 	manus = {state = "default", x = 300, y = 600, sprite = manusStart, invul = false, invultim = 0, invulAnimTim = 0, stompTim = 0}
 	speed = 220
@@ -608,7 +612,7 @@ function love.load()
 		highScore = love.filesystem.read("highscore.fin")
 	else
 		love.filesystem.newFile("highscore.fin")
-		highScore = 0
+		highScore = 12000
 		love.filesystem.write("highscore.fin", highScore)
 	end
 
@@ -616,8 +620,11 @@ function love.load()
 		firstTime = false
 	else
 		firstTime = true
+		love.filesystem.newFile("first.fin")
 	end
 
+	-- Forgive me
+	debugprint = ""
 
 	-- Gamestate"
 	Gamestate.registerEvents()
@@ -651,36 +658,59 @@ function cutscene1:enter(previous, ...)
 	buzz = false
 end
 
-function cutscene1:keyreleased(key, code)
-	if key == "return" then
-		for k, v in allFrames do
-			if drawFrame == Frames.F03 then
-				buzz = true
-				love.audio.play(Sound.ralov)
-			elseif drawFrame == Frames.F11 then
-				buzz = false
-			elseif drawFrame == Frames.F19 then
-				love.filesystem.newFile("first.fin")
-				Gamestate.switch(level1)
-			elseif drawFrame == v then
-				if lastStep >= 0.2 then
-					drawFrame = allFrames[k + 1]
-					lastStep = 0
-				end
-			end
-		end
-	end
-end
-
 function cutscene1:update(dt)
 	lastStep = lastStep + dt
 
-	if buzz == true then
-		if lastStep >= 0.02 then
-			for k,v in allFrames do
-				if drawFrame == v then
-					drawFrame = allFrames[k + 1]
-				end
+	if drawFrame == Frames.F19 then
+		if love.keyboard.isDown("return") and lastStep >= 3 then
+			Gamestate.switch(level1)
+		end
+
+	elseif drawFrame == Frames.F04 then
+		if lastStep >= 0.13 then
+			drawFrame = Frames.F05
+			lastStep = 0
+
+			love.audio.play(Sound.ralov)
+		end
+	elseif drawFrame == Frames.F05 then
+		if lastStep >= 0.13 then
+			drawFrame = Frames.F06
+			lastStep = 0
+		end
+	elseif drawFrame == Frames.F06 then
+		if lastStep >= 0.13 then
+			drawFrame = Frames.F07
+			lastStep = 0
+		end
+	elseif drawFrame == Frames.F07 then
+		if lastStep >= 0.13 then
+			drawFrame = Frames.F08
+			lastStep = 0
+		end
+	elseif drawFrame == Frames.F08 then
+		if lastStep >= 0.13 then
+			drawFrame = Frames.F09
+			lastStep = 0
+		end
+	elseif drawFrame == Frames.F09 then
+		if lastStep >= 0.13 then
+			drawFrame = Frames.F10
+			lastStep = 0
+		end
+	elseif drawFrame == Frames.F10 then
+		if lastStep >= 0.13 then
+			drawFrame = Frames.F11
+			lastStep = 0
+		end
+
+	elseif love.keyboard.isDown("return") and drawFrame ~= F19 then
+		copy = drawFrame
+		debugprint = lastStep
+		for k,v in pairs(allFrames) do
+			if v == copy and lastStep >= 1.6 then
+				drawFrame = allFrames[k + 1]
+				lastStep = 0
 			end
 		end
 	end
@@ -688,4 +718,39 @@ end
 
 function cutscene1:draw()
 	love.graphics.draw(drawFrame, 0, 0)
+	love.graphics.print("ENT.", 780, 820)
+
+	love.graphics.print("blah: "..debugprint, 0, 0)
+end
+
+
+
+function cutscene2:enter()
+	lastStep = 0
+
+	muhFrames = {Frames.D01, Frames.D02, Frames.D03}
+	muhDrawFrame = Frames.D01
+
+end
+
+function cutscene2:update(dt)
+	lastStep = lastStep + dt
+
+	if love.keyboard.isDown("return") then
+		copy = muhDrawFrame
+		for k,v in pairs(muhFrames) do
+			if muhDrawFrame == Frames.D03 then
+				if lastStep >= 3 then
+					Gamestate.switch(menu)
+				end
+			elseif v == copy and lastStep >= 1.6 then
+				muhDrawFrame = muhFrames[k + 1]
+				lastStep = 0
+			end
+		end
+	end
+end
+
+function cutscene2:draw()
+	love.graphics.draw(muhDrawFrame, 0, 0)
 end
