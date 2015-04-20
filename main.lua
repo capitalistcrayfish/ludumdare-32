@@ -61,7 +61,7 @@ function level1:init()
 
 	pinkySprite, ringSprite, middleSprite, indexSprite, thumbSprite = Img.PINKY1, Img.RING1, Img.MIDDLE1, Img.INDEX1, Img.THUMB1
 
-	waveTypes = {"single", "double", "scissors", "file"} -- Define wavetypes
+	waveTypes = {"single", "double", "scissors", "file", "sidefiles"} -- Define wavetypes
 end
 
 function level1:enter(previous, ...)
@@ -110,22 +110,22 @@ function level1:update(dt)
 	end
 
 	-- User input:
-	if love.keyboard.isDown("left") then
+	if love.keyboard.isDown("left") and manus.state ~= "stomp" then
 		if manus.x > 0 then
 			manus.x = manus.x - (speed * dt)
 		end
 	end
-	if love.keyboard.isDown("right") then
+	if love.keyboard.isDown("right") and manus.state ~= "stomp" then
 		if manus.x < love.graphics.getWidth() - Img.IDLE1:getWidth() then
 			manus.x = manus.x + (speed * dt)
 		end
 	end
-	if love.keyboard.isDown("up") then
+	if love.keyboard.isDown("up") and manus.state ~= "stomp" then
 		if manus.y > 0 then
 			manus.y = manus.y - (0.5 * speed * dt)
 		end
 	end
-	if love.keyboard.isDown("down") then
+	if love.keyboard.isDown("down") and manus.state ~= "stomp" then
 		if manus.y < love.graphics.getHeight() - Img.IDLE1:getHeight() then
 			manus.y = manus.y + (0.5 * speed * dt)
 		end
@@ -219,10 +219,16 @@ function level1:update(dt)
 	-- Stomping:
 	if love.keyboard.isDown("y", "u", "i", "o", "h", "j", "k", "l", "b", "n", "m", ";", ",", ".") then
 		manus.state = "stomp"
+		manus.stompTim = 0
 	end
 
 	if manus.state == "stomp" then
-		-- TODO
+		manus.stompTim = manus.stompTim + dt
+		if manus.stompTim >= 3 then
+			manus.state = "default"
+		elseif manus.stompTim >= 2 then
+			-- TODO
+		end
 	end
 
 	-- Animations:
@@ -276,6 +282,11 @@ function level1:update(dt)
 			end
 		elseif waveType == "file" then
 			newFile = {x = 450 - (Img.FILE1:getWidth() / 2), start = 450 - (Img.FILE1:getWidth() / 2), y = -1 * Img.FILE1:getHeight(), sprite = FILE1, tim = 0.5, sprite = Img.FILE1, dir = "right"}
+			table.insert(files, newFile)
+		elseif waveType == "sidefiles" then
+			newFile = {x = 900 + Img.FILE1:getWidth(), start = 900 + Img.FILE1:getWidth() - 100, y = 350, sprite = FILE1, tim = 0.5, sprite = Img.FILE1, dir = "right"}
+			table.insert(files, newFile)
+			newFile = {x = -1 * Img.FILE1:getWidth() , start = -1 * Img.FILE1:getWidth() + 100, y = 350, sprite = FILE1, tim = 0.5, sprite = Img.FILE1, dir = "right"}
 			table.insert(files, newFile)
 		end
 
@@ -550,7 +561,7 @@ function love.load()
 	bigJustice = love.graphics.newFont("font/justice.ttf", 47)
 	love.graphics.setFont(ubuntu)
 	manusStart = Img.IDLE1
-	manus = {state = "default", x = 300, y = 600, sprite = manusStart, invul = false, invultim = 0, invulAnimTim = 0}
+	manus = {state = "default", x = 300, y = 600, sprite = manusStart, invul = false, invultim = 0, invulAnimTim = 0, stompTim = 0}
 	speed = 220
 
 	-- Splash screen:
