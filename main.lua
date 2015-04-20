@@ -84,7 +84,7 @@ function level1:enter(previous, ...)
 
 	newWave = 5
 
-	terrain = {grass = {}, palms = {}, turrets = {}}
+	terrain = {grass = {}, palms = {}, turrets = {}, lakes = {}}
 
 	for i = -2,12 do
 		table.insert(terrain.grass, {x = 0, y = i * 100})
@@ -92,6 +92,10 @@ function level1:enter(previous, ...)
 
 	for i = 1,50 do
 		table.insert(terrain.palms, {x = math.random() * math.random() * 900, y = math.random() * math.random() * 900, broken = false})
+	end
+	
+	for i = 1,8 do
+		table.insert(terrain.lakes, {x = math.random() * math.random() * 900, y = math.random() * math.random() * 900}
 	end
 
 	splodes = {} -- Format:   splodes = { {tim = 0.5, x = 1, y = 1} }
